@@ -1,0 +1,13 @@
+# web服务器端口
+server:
+    port: 8888
+# 关闭actuator安全校验
+management:
+    security:
+      enabled: false
+endpoints:
+    restart:
+        # 开启上下文restart端点
+        enabled: true
+        # 关闭restart端点权限校验
+        sensitive: false
