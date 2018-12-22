@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationEvent;
  * @author liangxiong
  * @Date:2018-12-19
  * @Time:21:40
- * @Description 自定义应用事件
+ * @Description 自定义事件, 继承@{link org.springframework.context.ApplicationEvent}
  */
 public class DiyApplicationEvent extends ApplicationEvent {
 

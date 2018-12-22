@@ -17,10 +17,10 @@ public class DiyApplicationEventTest {
         // 注册自定义应用监听器方式一(自动调用refresh方法)
         AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(DiyApplicationListener.class);
         // 注册自定义应用监听器方式二
-        ///DiyApplicationListener applicationListener = new DiyApplicationListener();
-        ///applicationContext.addApplicationListener(applicationListener);
+        /// DiyApplicationListener applicationListener = new DiyApplicationListener();
+        /// applicationContext.addApplicationListener(applicationListener);
         // 注册自定义应用监听器方式三(借助于@Component)
-        ///applicationContext.register(DiyApplicationListener.class);
+        /// applicationContext.register(DiyApplicationListener.class);
         // 实例化自定义应用事件
         DiyApplicationEvent diyApplicationEvent = new DiyApplicationEvent("hello,kitty");
         DiyApplicationEvent diyApplicationEvent2 = new DiyApplicationEvent(666);
