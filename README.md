@@ -18,24 +18,27 @@ Spring Cloud学习项目
 
 > Edgware.SR5
 
-# 端点
+# Endpoint
 
 - org.springframework.cloud.context.restart.RestartEndpoint
 - org.springframework.cloud.context.restart.RestartEndpoint.PauseEndpoint
 - org.springframework.cloud.context.restart.RestartEndpoint.ResumeEndpoint
 
-# 事件
+# Event
 
 - java.util.EventObject
   - org.springframework.context.ApplicationEvent
 
-# 监听器
+# Listener
 
 - java.util.EventListener
 
   - org.springframework.context.ApplicationListener
 
     - org.springframework.boot.context.config.ConfigFileApplicationListener
+
+      - org.springframework.boot.context.config.ConfigFileApplicationListener.Loader#load()
+      - org.springframework.boot.env.PropertySourcesLoader#load(org.springframework.core.io.Resource, java.lang.String, java.lang.String, java.lang.String)
 
       > 读取SpringBoot配置文件
       >
@@ -49,31 +52,66 @@ Spring Cloud学习项目
       >
       > BootstrapApplicationListener加载优先级高于SpringBoot的ConfigFileApplicationListener
 
-# 属性资源加载器
+# PropertySourceLoader
 
 - org.springframework.boot.env.PropertySourceLoader
   - org.springframework.boot.env.PropertiesPropertySourceLoader
   - org.springframework.boot.env.YamlPropertySourceLoader
 
-# 应用上下文
+# ApplicationContext
 
 - org.springframework.context.ApplicationContext
   - org.springframework.context.ConfigurableApplicationContext
     - org.springframework.context.annotation.AnnotationConfigApplicationContext
     - org.springframework.boot.context.embedded.AnnotationConfigEmbeddedWebApplicationContext
 
-# 环境
+# Environment
 
 - org.springframework.core.env.Environment
+
   - org.springframework.core.env.AbstractEnvironment
+
     - org.springframework.core.env.StandardEnvironment
     - org.springframework.web.context.support.StandardServletEnvironment
     - org.springframework.mock.env.MockEnvironment
+
   - org.springframework.core.env.ConfigurableEnvironment
+
+    ```java
+    void setActiveProfiles(String... profiles);
+    void addActiveProfile(String profile);
+    void setDefaultProfiles(String... profiles);
+    MutablePropertySources getPropertySources();
+    Map<String, Object> getSystemProperties();
+    Map<String, Object> getSystemEnvironment();
+    void merge(ConfigurableEnvironment parent);
+    ```
+
+# PropertySource
+
+- org.springframework.core.env.ConfigurableEnvironment
+
+  ```java
+  MutablePropertySources getPropertySources();
+  ```
+
+- org.springframework.core.env.MutablePropertySources implements PropertySources 
+
+- org.springframework.core.env.PropertySources extends Iterable<PropertySource<?>>
+
+- org.springframework.core.env.PropertySource
+
+  > key就是env接口返回的JSON数据的key
+  >
+  > value是泛型
+
+  - org.springframework.core.env.MapPropertySource
+  - org.springframework.core.env.PropertiesPropertySource
+  - org.springframework.core.env.CommandLinePropertySource
 
 # 注意事项
 
-> 由于BootstrapApplicationListener优先于ConfigFileApplicationListener加载,所以不能通过SpringBoot默认配置文件去修改SpringCloud地属性
+> 由于BootstrapApplicationListener优先于ConfigFileApplicationListener加载,所以不能通过SpringBoot默认配置文件去修改SpringCloud`特定`地属性
 
 # 修改SpringCloud配置(通过命令行)
 

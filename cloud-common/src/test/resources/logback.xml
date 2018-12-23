@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- logback-spring.xml可以加载一部分自定义属性;实现原理:org.springframework.boot.logging.AbstractLoggingSystem.getSpringConfigLocations -->
+<configuration debug="false">
+    <!-- 定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 -->
+    <property name="LOG_HOME" value="${user.dir}\\logs"/>
+    <!--
+        系统处于哪种环境(Use the name attribute to specify which profile accepts the configuration)
+        属于存储位置(You can use the scope attribute if you need to store the property somewhere other than in local scope)
+        属性名称(you specify the source of the property (from the Environment))
+    -->
+    <springProperty scope="context" name="prod" source="user"
+                    defaultValue="test"/>
+    <!-- 控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!-- 格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} | %highlight(%-5level) | %yellow(%thread) | %green(%logger) |
+                %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+    <!-- 按照每天生成日志文件 -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名-->
+            <FileNamePattern>${LOG_HOME}/runtime.log.%d{yyyy-MM-dd}.log</FileNamePattern>
+            <!--日志文件保留天数-->
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!-- 格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} | %highlight(%-5level) | %yellow(%thread) | %green(%logger) |
+                %msg%n
+            </pattern>
+        </encoder>
+        <!-- 日志文件最大的大小 -->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>5MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+    <!-- Email输出 -->
+    <appender name="EMAIL" class="ch.qos.logback.classic.net.SMTPAppender">
+        <!-- 邮件服务器主机 -->
+        <smtpHost>smtp.qq.com</smtpHost>
+        <!-- 邮件服务器端口 -->
+        <smtpPort>25</smtpPort>
+        <!-- 用户名 -->
+        <username>3521392244@qq.com</username>
+        <!-- 密码 -->
+        <password>password</password>
+        <!-- 收件人(可以多个) -->
+        <to>scliangxiong@gmail.com</to>
+        <!-- 发件人 -->
+        <from>3521392244@qq.com</from>
+        <!-- 邮件主题 -->
+        <subject>SpringBoot系统异常日志</subject>
+        <!-- 内容布局格式 -->
+        <layout class="ch.qos.logback.classic.html.HTMLLayout">
+            <pattern>%date %-5level %logger{35} - %message%n</pattern>
+        </layout>
+    </appender>
+    <!-- 局部日志级别配置(优先级更高) -->
+    <logger name="org.liangxiong.springcloud" level="DEBUG" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+    <!-- 日志输出级别(全局配置) -->
+    <root level="INFO">
+        <!-- 开启控制台输出 -->
+        <appender-ref ref="STDOUT"/>
+        <!-- 开启日志文件输出 -->
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration>

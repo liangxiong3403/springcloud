@@ -1,0 +1,15 @@
+server:
+    port: 8082
+management:
+    security:
+        enabled: false
+    port: 9003
+spring:
+    application:
+        name: spring-cloud-config-server
+    cloud:
+        config:
+            server:
+                git:
+                    # Spring Cloud配置服务器仓库地址
+                    uri: ${user.dir}\\cloud-config-server\\src\\main\\resources\\config
