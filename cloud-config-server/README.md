@@ -2,7 +2,7 @@
 
 ## 搭建Spring Cloud Config Server
 
-### 基于Git
+### 基于本地文件系统
 
 - 创建本地文件目录
 
@@ -102,5 +102,95 @@ http://localhost:8082/user/test
 		}
 	}]
 }
+```
+
+### 基于远程Github仓库
+
+- Github上面创建临时仓库temp,用于存放配置文件
+
+```tex
+https://github.com/liangxiong3403/temp
+```
+
+- 提交一些配置文件到Github
+
+```tex
+user.properties
+user-prod.properties
+user-test.properties
+```
+
+- 服务器配置Github地址
+
+```properties
+server:
+    port: 8082
+management:
+    security:
+        enabled: false
+    port: 9003
+spring:
+    application:
+        name: spring-cloud-config-server
+    cloud:
+        config:
+            server:
+                git:
+                    # 配置远程Github仓库地址
+                    uri: https://github.com/liangxiong3403/temp
+```
+
+- 配置强制拉取仓库最新内容
+
+```yaml
+#Flag to indicate that the repository should force pull. If true discard any local changes and take from remote repository.
+spring:
+    cloud:
+        config:
+            server:
+                git:
+                    force-pull: true
+```
+
+
+
+- 重启应用服务器
+- 测试配置服务器
+
+```tex
+http://localhost:8082/user/dev
+http://localhost:8082/user/prod
+http://localhost:8082/user/test
+```
+
+**结果**
+
+```json
+{
+	"name": "user",
+	"profiles": ["test"],
+	"label": null,
+	"version": "4d2fb52faa76c8c2794046b3b5976b7bdb2dd63a",
+	"state": null,
+	"propertySources": [{
+		"name": "https://github.com/liangxiong3403/temp/user-test.properties",
+		"source": {
+			"name": "user-test-v2"
+		}
+	}, {
+		"name": "https://github.com/liangxiong3403/temp/user.properties",
+		"source": {
+			"name": "user"
+		}
+	}]
+}
+```
+
+- 查看配置文件内容
+
+```tex
+http://localhost:8082/user-default.properties
+http://localhost:8082/user-prod.properties
+http://localhost:8082/user-test.properties
 ```
 
