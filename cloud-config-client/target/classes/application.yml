@@ -1,9 +1,0 @@
-server:
-    port: 8081
-management:
-    security:
-        enabled: false
-    port: 9002
-spring:
-    application:
-        name: spring-cloud-config-client
