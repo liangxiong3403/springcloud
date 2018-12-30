@@ -19,12 +19,10 @@ WebContent/.idea/
 .project
 /bin/
 target/*
-cloud-config-server/target/*
-cloud-config-client/target/*
 pom.xml.versionsBackup
 .gitattributes
 .travis.yml
 
-cloud-common/target/generated-sources/
-cloud-config-client/target/generated-sources/
-cloud-config-server/target/generated-sources/
+/cloud-common/target/
+/cloud-config-client/target/
+/cloud-config-server/target/
