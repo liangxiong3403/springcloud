@@ -7,6 +7,8 @@ import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author liangxiong
@@ -20,8 +22,11 @@ public class CustomPropertySourceLocator implements PropertySourceLocator {
 
     @Override
     public PropertySource<?> locate(Environment environment) {
+        Map<String, String> data = new HashMap<>(8);
+        data.put("lx.color", "blue");
+        data.put("lx.gender", "male");
         // 代码类似于CustomBootstrapConfiguration的方式
         return new MapPropertySource("diyPropertyByCloud",
-                Collections.singletonMap("lx.color", "blue"));
+                Collections.unmodifiableMap(data));
     }
 }

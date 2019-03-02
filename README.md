@@ -18,6 +18,14 @@ Spring Cloud学习项目
 
 > Edgware.SR5
 
+# SOA
+
+> **Service-oriented architecture** (**SOA**) is a style of [software design](https://en.wikipedia.org/wiki/Software_design) where services are provided to the other components by [application components](https://en.wikipedia.org/wiki/Application_components), through a [communication protocol](https://en.wikipedia.org/wiki/Communications_protocol) over a network. The basic principles of service-oriented architecture are independent of vendors, products and technologies.A service is a discrete unit of functionality that can be accessed remotely and acted upon and updated independently, such as retrieving a credit card statement online.
+
+# 微服务
+
+> **Microservices** are a [software development](https://en.wikipedia.org/wiki/Software_development) technique—a variant of the [service-oriented architecture](https://en.wikipedia.org/wiki/Service-oriented_architecture) (SOA) architectural style that structures an [application](https://en.wikipedia.org/wiki/Application_(computing)) as a collection of [loosely coupled](https://en.wikipedia.org/wiki/Coupling_(computer_programming)) (松散耦合)services. In a microservices architecture, services are [fine-grained](https://en.wikipedia.org/wiki/Service_granularity_principle) and the [protocols](https://en.wikipedia.org/wiki/Protocol_(computing)) are lightweight. The benefit of decomposing(分解) an application into different smaller services is that it improves [modularity](https://en.wikipedia.org/wiki/Modular_programming). This makes the application easier to understand, develop, test, and become more resilient (有弹力)to architecture erosion(分解).It parallelizes [development](https://en.wikipedia.org/wiki/Software_development) by enabling small autonomous(自治) teams to develop, [deploy](https://en.wikipedia.org/wiki/Software_deployment) and scale their respective services independently.It also allows the architecture of an individual service to emerge(展现) through continuous [refactoring](https://en.wikipedia.org/wiki/Refactoring).Microservices-based architectures enable [continuous delivery](https://en.wikipedia.org/wiki/Continuous_delivery) and deployment.
+
 # Endpoint
 
 - org.springframework.cloud.context.restart.RestartEndpoint
@@ -51,6 +59,12 @@ Spring Cloud学习项目
       > 优先级:DEFAULT_ORDER = Ordered.HIGHEST_PRECEDENCE + 5
       >
       > BootstrapApplicationListener加载优先级高于SpringBoot的ConfigFileApplicationListener
+
+    - org.springframework.boot.SpringApplication#prepareEnvironment方法调用
+
+      > 将会触发ApplicationEnvironmentPreparedEvent事件,从而被org.springframework.cloud.bootstrap.BootstrapApplicationListener监听到,从而创建SpringCloud上下文
+
+    - org.springframework.boot.SpringApplication#createApplicationContext方法创建SpringBoot应用上下文
 
 # PropertySourceLoader
 
