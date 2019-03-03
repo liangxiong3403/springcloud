@@ -11,3 +11,6 @@ management:
     security:
         enabled: false
     port: 9001
+spring:
+    application:
+        name: spring-boot-common

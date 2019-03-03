@@ -32,8 +32,8 @@ public class CustomBootstrapConfiguration implements ApplicationContextInitializ
         source.put("lx.name", "xiangqian");
         source.put("lx.sex", "male");
         source.put("lx.age", 25);
-        PropertySource mapPropertySource = new MapPropertySource("diyPersonBySpring", source);
+        PropertySource propertySource = new MapPropertySource("diyPersonBySpring", source);
         // 添加到指定属性资源key地前面(通过env接口查看key)
-        propertySources.addBefore("applicationConfig: [classpath:/bootstrap.yml]", mapPropertySource);
+        propertySources.addBefore("applicationConfig: [classpath:/bootstrap.yml]", propertySource);
     }
 }

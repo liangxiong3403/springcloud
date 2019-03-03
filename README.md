@@ -66,6 +66,8 @@ Spring Cloud学习项目
 
     - org.springframework.boot.SpringApplication#createApplicationContext方法创建SpringBoot应用上下文
 
+      > ApplicationEnvironmentPreparedEvent事件也将触发ConfigFileApplicationListener监听器
+
 # PropertySourceLoader
 
 - org.springframework.boot.env.PropertySourceLoader
