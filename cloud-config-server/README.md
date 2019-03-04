@@ -16,7 +16,7 @@ user-prod.properties
 user-test.properties
 ```
 
-- 配置本地目录
+- 配置本地目录(参考org.springframework.cloud.config.server.config.ConfigServerProperties)
 
 ```yaml
 server:
@@ -36,7 +36,7 @@ spring:
                     uri: ${user.dir}\cloud-config-server\src\main\resource\config
 ```
 
-- 激活应用配置服务器
+- 使用@EnableConfigServer激活应用配置服务器
 
 ```java
 @EnableConfigServer
@@ -194,3 +194,60 @@ http://localhost:8082/user-prod.properties
 http://localhost:8082/user-test.properties
 ```
 
+# Spring Cloud配置客户端
+
+## 搭建 Spring Cloud Config Client
+
+- 配置application.yml
+
+```yaml
+server:
+    port: 8081
+management:
+    security:
+        enabled: false
+    port: 9002
+spring:
+    application:
+        name: spring-cloud-config-client
+```
+
+- bootstrap.properties(参考参考org.springframework.cloud.config.client.ConfigClientProperties)
+
+```yaml
+spring:
+    cloud:
+        config:
+        	# 配置服务器地址
+            uri: http://127.0.0.1:8082
+            # 拉取地配置文件所属地应用名称(optional)
+            name: user
+            # 拉取地配置文件所属地应用环境(开发/测试/生产)
+            profile: test
+            # 拉取地配置文件所属地标签
+            label: master
+```
+
+- 查看客户端启动日志
+
+  > 2019-03-04 10:45:54.546 | INFO  | restartedMain | org.springframework.cloud.bootstrap.config.PropertySourceBootstrapConfiguration | Located property source: CompositePropertySource [name='configService', propertySources=[MapPropertySource {name='configClient'}, MapPropertySource {name='https://github.com/liangxiong3403/temp/user-test.properties'}, MapPropertySource {name='https://github.com/liangxiong3403/temp/user.properties'}]]
+
+- 如果没有指定spring.cloud.config.name,那么会使用spring.application.name来作为application属性值
+
+  > 2019-03-04 10:52:57.276 | INFO  | restartedMain | org.springframework.cloud.config.client.ConfigServicePropertySourceLocator | Located environment: name=spring-cloud-config-client, profiles=[test], label=master, version=41316b9ead54d5af90689422673988bf61b0ae63, state=null
+
+- 查看actuator中的environment信息
+
+  > configService:configClient: {
+  > config.client.version: "41316b9ead54d5af90689422673988bf61b0ae63"
+  > },
+  > configService:https://github.com/liangxiong3403/temp/user-test.properties: {
+  > name: "user-test"
+  > },
+  > configService:https://github.com/liangxiong3403/temp/user.properties: {
+  > name: "user"
+  > }
+
+- 通过http://localhost:9002/env/name获取配置项名称
+
+  > user-test

@@ -1,0 +1,11 @@
+spring:
+    cloud:
+        config:
+            # 配置服务器地址
+            uri: http://127.0.0.1:8082
+            # 拉取地配置文件所属地应用名称(optional)
+            name: user
+            # 拉取地配置文件所属地应用环境(开发/测试/生产)
+            profile: test
+            # 拉取地配置文件所属地标签
+            label: master
