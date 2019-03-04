@@ -218,7 +218,7 @@ spring:
 spring:
     cloud:
         config:
-        	# 配置服务器地址
+			# 配置服务器地址
             uri: http://127.0.0.1:8082
             # 拉取地配置文件所属地应用名称(optional)
             name: user
@@ -248,6 +248,84 @@ spring:
   > name: "user"
   > }
 
-- 通过http://localhost:9002/env/name获取配置项名称
+- 通过`http://localhost:9002/env/name`获取配置项名称
 
   > user-test
+
+# 动态配置Bean
+
+- 定义bean
+
+```java
+/**
+ * @author liangxiong
+ * @Date:2019-03-04
+ * @Time:11:14
+ * @Description 用户
+ */
+@Getter
+@Setter
+@ConfigurationProperties(prefix = "user")
+public class User {
+
+    /**
+     * 昵称
+     */
+    private String nickname;
+
+    /**
+     * 年龄
+     */
+    private Integer age;
+}
+```
+
+- 注册bean
+
+```java
+/**
+ * @author liangxiong
+ * @Date:2019-03-04
+ * @Time:11:20
+ * @Description 主页控制器
+ */
+@RestController
+@EnableConfigurationProperties(User.class)
+@RequestMapping("/index")
+public class IndexController {
+
+    private final User user;
+
+    @Autowired
+    public IndexController(User user) {
+        this.user = user;
+    }
+
+    @GetMapping("/config/user")
+    public User getUserFromConfig() {
+        return user;
+    }
+
+}
+```
+
+- 通过`http://localhost:8081/index/config/user`获取返回值
+
+```json
+{
+    nickname: "baoyatou",
+    age: 16
+}
+```
+
+- 通过post方法修改数据,localhost:9002/env?user.age=20&user.sex=female&user.nickname=xuebaochai
+
+- 查看返回值
+
+```json
+{
+    nickname: "xuebaochai",
+    age: 20
+}
+```
+

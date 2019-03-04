@@ -7,3 +7,6 @@ management:
 spring:
     application:
         name: spring-cloud-config-client
+user:
+    nickname: baoyatou
+    age: 16
