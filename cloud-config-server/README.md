@@ -313,19 +313,102 @@ public class IndexController {
 
 ```json
 {
-    nickname: "baoyatou",
-    age: 16
+    "nickname": "baoyatou",
+    "age": 16
 }
 ```
 
 - 通过post方法修改数据,localhost:9002/env?user.age=20&user.sex=female&user.nickname=xuebaochai
 
-- 查看返回值
+- 查看`http://localhost:8081/index/config/user`返回值
 
 ```json
 {
-    nickname: "xuebaochai",
-    age: 20
+    "nickname": "xuebaochai",
+    "age": 20
 }
+```
+
+# 批量修改配置文件
+
+> 配置客户端拉取地配置文件优先级高于默认地application.properties或application.yml或bootstrap.properties
+
+- 修改配置服务器对应配置文件`user-test.properties`
+
+```properties
+# 应用名称user,测试环境
+name=user-test
+user.nickname=xuebaochai
+user.age=18
+```
+
+- 提交配置信息
+
+```shell
+git add .
+git commit -m "update server's test config file"
+git push
+```
+
+- 重启客户端
+
+>  发现所有user相关配置都已经修改了(因为服务端配置优先级更高)
+
+- 通过调用**客户端**的`特定`endpoint,客户端获取配置**服务端**动态修改地内容(无需重启客户端)
+
+```shell
+POST localhost:9002/refresh
+```
+
+> 通过调用refresh接口,实际上访问了org.springframework.cloud.endpoint.GenericPostableMvcEndpoint#invoke
+
+- 动态感知配置服务器文件修改
+
+  - 方式一:定时器refresh上下文
+
+  ```java
+  @Slf4j
+  @SpringBootApplication
+  public class ConfigClientApplication {
+  
+      private final ContextRefresher contextRefresher;
+  
+      @Autowired
+      public ConfigClientApplication(ContextRefresher contextRefresher) {
+          this.contextRefresher = contextRefresher;
+      }
+  
+      public static void main(String[] args) {
+          SpringApplication.run(ConfigClientApplication.class, args);
+      }
+  
+      /**
+       * 定时刷新配置服务器文件
+       */
+      @Scheduled(cron = "0/5 * * * * ? ")
+      public void refreshServerConfig() {
+          Set<String> keys = contextRefresher.refresh();
+          if (!CollectionUtils.isEmpty(keys)) {
+              log.info("server config changes: {}", keys);
+          }
+      }
+  
+  }
+  
+  
+  ```
+
+  - 方式二:通过官方提供地方式`spring-cloud-config-monitor`
+
+  > You can configure the webhook via the provider’s user interface as a URL and a set of events in which you are interested. For instance Github will POST to the webhook with a JSON body containing a list of commits, and a header "X-Github-Event" equal to "push". If you add a dependency on the spring-cloud-config-monitor library and activate the Spring Cloud Bus in your Config Server, then a "/monitor" endpoint is enabled.
+
+- 开启restart/pause/resume端点
+
+```yaml
+endpoints:
+	# 同时开启restart/pause/resume
+    restart:
+        enabled: true
+        sensitive: false
 ```
 
