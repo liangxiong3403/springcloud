@@ -1,28 +1,30 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Java template
+# Compiled class file
 *.class
-/build
-/.idea
-/.settings
-*.iml
-.classpath
-*.war
-*.ear
-*.jar
-*.DS_Store
-/.gradle
-/.gradle*
-*.log
-*.log.*
-*.swp
-#/.settings
-/work
-WebContent/.idea/
-.project
-/bin/
-target/*
-pom.xml.versionsBackup
-.gitattributes
-.travis.yml
 
-/cloud-common/target/
-/cloud-config-client-git/target/
-/cloud-config-server-git/target/
+# Log file
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+*.iml
+.idea
+/cloud-common/target/*
+/cloud-config-client-git/target/*
+/cloud-config-server-git/target/*

@@ -5,8 +5,8 @@
     <packaging>pom</packaging>
     <modules>
         <module>cloud-common</module>
-        <module>cloud-config-server</module>
-        <module>cloud-config-client</module>
+        <module>cloud-config-server-git</module>
+        <module>cloud-config-client-git</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -82,12 +82,12 @@
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
-                <artifactId>cloud-config-server</artifactId>
+                <artifactId>cloud-config-server-git</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
-                <artifactId>cloud-config-client</artifactId>
+                <artifactId>cloud-config-client-git</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>
