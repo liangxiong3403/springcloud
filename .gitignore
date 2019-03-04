@@ -24,5 +24,5 @@ pom.xml.versionsBackup
 .travis.yml
 
 /cloud-common/target/
-/cloud-config-client/target/
-/cloud-config-server/target/
+/cloud-config-client-git/target/
+/cloud-config-server-git/target/
