@@ -1,0 +1,24 @@
+server:
+    port: 8084
+management:
+    security:
+        enabled: false
+    port: 9005
+spring:
+    application:
+        name: spring-cloud-eureka-client
+# 配置注册中心地址
+eureka:
+    client:
+        serviceUrl:
+            defaultZone: http://127.0.0.1:8083/eureka/
+    instance:
+        # 配置状态检查页面地址(使用绝对地址,默认是/info)
+        status-page-url: http://127.0.0.1:8084/status
+        # 配置健康检查页面地址(使用相对地址,默认是/health)
+        health-check-url-path: /health
+        # 配置客户端实例主页相对地址
+        home-page-url-path: /client
+user:
+    nickname: xuebaochai
+    age: 18

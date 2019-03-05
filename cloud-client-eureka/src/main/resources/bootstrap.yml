@@ -1,0 +1,11 @@
+spring:
+    cloud:
+        config:
+            # 配置服务器地址
+            uri: http://127.0.0.1:8085
+            # 获取指定应用名称配置文件
+            name: user
+            # 配置文件所属环境
+            profile: test
+            # 配置文件标签
+            label: master
