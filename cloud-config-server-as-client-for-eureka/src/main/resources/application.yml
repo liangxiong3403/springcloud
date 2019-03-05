@@ -16,10 +16,6 @@ spring:
                     uri: https://github.com/liangxiong3403/temp
                     # 强制拉取远程仓库文件内容(Flag to indicate that the repository should force pull. If true discard any local changes and take from remote repository.)
                     force-pull: true
-            discovery:
-                # 配置服务发现
-                enabled: true
-                service-id: spring-cloud-config-server-as-client-for-eureka
 eureka:
     client:
         # 配置eureka注册中心地址

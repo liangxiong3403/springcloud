@@ -175,7 +175,7 @@ eureka:
 
 > 将Spring Cloud Config Server作为Eureka客户端与Eureka服务端整合
 
-## 引入Maven依赖
+## cloud-config-server-as-client-for-eureka引入Maven依赖
 
 - Spring Cloud Config Server相关依赖
 
@@ -192,6 +192,15 @@ eureka:
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+```
+
+## spring-cloud-eureka-client引入依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-config</artifactId>
 </dependency>
 ```
 
@@ -265,19 +274,26 @@ spring:
             label: master
 ```
 
-## 重启`spring-cloud-eureka-client`项目
+## 使用配置服务器名称替换URI引用
 
-## 将cloud-config-server-as-client-for-eureka设置为Eureka客户端
-
-- 修改配置文件application.yml,添加如下配置
+- 修改`spring-cloud-eureka-client`项目的配置文件bootstrap.properties,配置如下
 
 ```yml
 spring:
     cloud:
-    	config:
-            discovery:
-                # 配置服务发现
-                enabled: true
-                service-id: spring-cloud-config-server-as-client-for-eureka
+        config:
+            # 获取指定应用名称配置文件
+            name: user
+            # 配置文件所属环境
+            profile: test
+            # 配置文件标签
+            label: master
+        # 替换spring.cloud.config.uri
+        discovery:
+            # 激活Config服务器发现
+            enabled: true
+            # Config应用服务器名称
+            service-id: spring-cloud-config-server-as-client-for-eureka
 ```
 
+## 重启`spring-cloud-eureka-client`项目
