@@ -6,7 +6,7 @@ management:
     port: 9003
 spring:
     application:
-        name: spring-cloud-config-server
+        name: "spring-cloud-config-server"
     cloud:
         config:
             server:
@@ -14,6 +14,6 @@ spring:
                     # Spring Cloud配置服务器本地仓库地址
                     # uri: ${user.dir}\cloud-config-server\src\main\resources\config
                     # 配置远程Github仓库地址
-                    uri: https://github.com/liangxiong3403/temp
+                    uri: "https://github.com/liangxiong3403/temp"
                     # 强制拉取远程仓库文件内容(Flag to indicate that the repository should force pull. If true discard any local changes and take from remote repository.)
                     force-pull: true

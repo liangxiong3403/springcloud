@@ -2,15 +2,21 @@ server:
     port: 8083
 spring:
     application:
-        name: spring-cloud-eureka-server
+        name: "spring-cloud-eureka-server"
 management:
     security:
         enabled: false
     port: 9004
 # 配置eureka注册中心
 eureka:
+    # 解決peer连接问题
+    instance:
+        hostname: localhost
     client:
         # 注册中心本身不需要借助eureka注册到其他注册中心,只提供服务
         register-with-eureka: false
         # 不需要从eureka获取注册中心信息(服务/实例信息)
         fetch-registry: false
+        # 自己作为自己的副本,防止集群副本连接8761端口报错
+        service-url:
+            defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka

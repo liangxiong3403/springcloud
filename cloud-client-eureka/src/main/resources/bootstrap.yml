@@ -1,3 +1,7 @@
+eureka:
+    client:
+        service-url:
+            defaulZone: "http://localhost:8083/eureka"
 spring:
     cloud:
         config:
@@ -7,9 +11,9 @@ spring:
             profile: test
             # 配置文件标签
             label: master
-        # 替换spring.cloud.config.uri
-        discovery:
-            # 激活Config服务器发现
-            enabled: true
-            # Config应用服务器名称
-            service-id: spring-cloud-config-server-as-client-for-eureka
+            # 替换spring.cloud.config.uri
+            discovery:
+                # 激活Config服务器发现
+                enabled: true
+                # Config应用服务器名称
+                service-id: "spring-cloud-config-server-as-client-for-eureka"

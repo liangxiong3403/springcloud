@@ -154,6 +154,9 @@ eureka:
         register-with-eureka: false
         # 不需要从eureka获取注册中心信息(服务/实例信息)
         fetch-registry: false
+        # 自己作为自己的副本,防止集群副本连接8761端口报错
+        service-url:
+            defaultZone: "http://localhost:8083/eureka"
 ```
 
 ## 配置实例状态检查页面相对地址
@@ -258,7 +261,7 @@ eureka:
 
 ## 将`spring-cloud-eureka-client`项目作为`cloud-config-server-as-client-for-eureka`项目地配置客户端
 
-- 修改`spring-cloud-eureka-client`配置文件bootstrap.yml
+- 修改`spring-cloud-eureka-client`配置文件`bootstrap.yml`,配置如下
 
 ```yaml
 spring:
@@ -276,7 +279,7 @@ spring:
 
 ## 使用配置服务器名称替换URI引用
 
-- 修改`spring-cloud-eureka-client`项目的配置文件bootstrap.properties,配置如下
+- 修改`spring-cloud-eureka-client`项目的配置文件`bootstrap.yml`,配置如下
 
 ```yml
 spring:
@@ -288,12 +291,62 @@ spring:
             profile: test
             # 配置文件标签
             label: master
-        # 替换spring.cloud.config.uri
-        discovery:
-            # 激活Config服务器发现
-            enabled: true
-            # Config应用服务器名称
-            service-id: spring-cloud-config-server-as-client-for-eureka
+            # 替换spring.cloud.config.uri
+            discovery:
+                # 激活Config服务器发现
+                enabled: true
+                # Config应用服务器名称
+                service-id: spring-cloud-config-server-as-client-for-eureka
 ```
 
 ## 重启`spring-cloud-eureka-client`项目
+
+- 项目报错
+
+```tex
+java.lang.IllegalStateException: No instances found of configserver (spring-cloud-config-server-as-client-for-eureka)
+```
+
+- 原因是没有定位到配置服务器
+
+- 解决报错
+
+  - 修改项目的bootstrap.yml,添加如下配置
+
+  ```yaml
+  eureka:
+      client:
+          service-url:
+              defaulZone: http://127.0.0.1:8083/eureka
+  ```
+
+  
+  - 修改项目的application.yml
+
+  ```yaml
+  server:
+      port: 8084
+  management:
+      security:
+          enabled: false
+      port: 9005
+  spring:
+      application:
+          name: "spring-cloud-eureka-client"
+  # 配置注册中心地址
+  eureka:
+      instance:
+          # 配置状态检查页面地址(使用绝对地址,默认是/info)
+          status-page-url: http://localhost:8084/status
+          # 配置健康检查页面地址(使用相对地址,默认是/health)
+          health-check-url-path: /health
+  user:
+      nickname: xuebaochai
+      age: 18
+  ```
+
+  
+
+  
+
+  
