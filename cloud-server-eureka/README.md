@@ -147,17 +147,29 @@ eureka:
 - 修改eureka**服务端**配置application.yml
 
 ```yaml
-# 配置eureka注册中心
 eureka:
+    instance:
+        #com.netflix.eureka.cluster.PeerEurekaNodes.isInstanceURL方法中
+        #String myInfoComparator = instance.getHostName();获取自定义hostname
+        #如果不配置,会随着运行机器不同而经常改变(默认规则)
+        hostname: localhost
     client:
         # 注册中心本身不需要借助eureka注册到其他注册中心,只提供服务
         register-with-eureka: false
         # 不需要从eureka获取注册中心信息(服务/实例信息)
         fetch-registry: false
-        # 自己作为自己的副本,防止集群副本连接8761端口报错
+        # 自己作为自己的副本,防止集群副本连接8761端口报错(当前cloud版本必须这样写)
         service-url:
-            defaultZone: "http://localhost:8083/eureka"
+            defaultZone: http://${eureka.instance.hostname}:8083/eureka
 ```
+
+- `spring-cloud-eureka-server`启动日志
+
+```tex
+The replica size seems to be empty. Check the route 53 DNS Registry
+```
+
+- `defaultZone`所使用的`主机名称`必须和配置的`hostname`保持一致,否则没效果!!!
 
 ## 配置实例状态检查页面相对地址
 
@@ -317,7 +329,7 @@ java.lang.IllegalStateException: No instances found of configserver (spring-clou
   eureka:
       client:
           service-url:
-              defaulZone: http://127.0.0.1:8083/eureka
+              defaulZone: http://localhost:8083/eureka
   ```
 
   

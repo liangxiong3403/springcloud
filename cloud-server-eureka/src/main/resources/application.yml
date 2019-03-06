@@ -9,14 +9,16 @@ management:
     port: 9004
 # 配置eureka注册中心
 eureka:
-    # 解決peer连接问题
     instance:
+        #com.netflix.eureka.cluster.PeerEurekaNodes.isInstanceURL方法中
+        #String myInfoComparator = instance.getHostName();获取自定义hostname
+        #如果不配置,会随着运行机器不同而经常改变(默认规则)
         hostname: localhost
     client:
         # 注册中心本身不需要借助eureka注册到其他注册中心,只提供服务
         register-with-eureka: false
         # 不需要从eureka获取注册中心信息(服务/实例信息)
         fetch-registry: false
-        # 自己作为自己的副本,防止集群副本连接8761端口报错
+        # 自己作为自己的副本,防止集群副本连接8761端口报错(当前cloud版本必须这样写)
         service-url:
-            defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+            defaultZone: http://${eureka.instance.hostname}:8083/eureka
