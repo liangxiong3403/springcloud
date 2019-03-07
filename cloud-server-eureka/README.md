@@ -350,11 +350,3 @@ java.lang.IllegalStateException: No instances found of configserver (spring-clou
       age: 18
   ```
 
-- 注意事项,相同配置情况下`spring-cloud-eureka-client`项目只能使用`bootstrap.properties`而不能是`bootstrap.yml`配置文件!!!
-
-  > 否则任然会出现java.lang.IllegalStateException: No instances found of configserver (spring-cloud-config-server-as-client-for-eureka)
-
-  - 原因(官方文档所示)
-
-  > YAML files can’t be loaded via the `@PropertySource` annotation. So in the case that you need to load values that way, you need to use a properties file.
-

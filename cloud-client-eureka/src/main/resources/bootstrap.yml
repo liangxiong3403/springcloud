@@ -1,0 +1,16 @@
+# 注册中心地址
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8083/eureka
+spring:
+    cloud:
+        # 配置中心元信息
+        config:
+            name: user
+            profile: test
+            label: master
+            # 配置中心id(对应于配置中心名称)
+            discovery:
+                enabled: true
+                service-id: spring-cloud-config-server-as-client-for-eureka
