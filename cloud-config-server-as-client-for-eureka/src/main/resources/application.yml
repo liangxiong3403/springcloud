@@ -6,18 +6,18 @@ management:
     port: 9006
 spring:
     application:
-        name: "spring-cloud-config-server-as-client-for-eureka"
+        name: spring-cloud-config-server-as-client-for-eureka
     cloud:
         config:
             # 配置中心相关配置
             server:
                 git:
                     # 配置远程Github仓库地址
-                    uri: "https://github.com/liangxiong3403/temp"
+                    uri: https://github.com/liangxiong3403/temp
                     # 强制拉取远程仓库文件内容(Flag to indicate that the repository should force pull. If true discard any local changes and take from remote repository.)
                     force-pull: true
 eureka:
     client:
         # 配置eureka注册中心地址
         service-url:
-            defaultZone: "http://localhost:8083/eureka"
+            defaultZone: http://localhost:8083/eureka

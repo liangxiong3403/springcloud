@@ -2,7 +2,7 @@ server:
     port: 8083
 spring:
     application:
-        name: "spring-cloud-eureka-server"
+        name: spring-cloud-eureka-server
 management:
     security:
         enabled: false

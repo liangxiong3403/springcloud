@@ -139,7 +139,7 @@ com.netflix.discovery.shared.transport.TransportException: Cannot execute reques
 eureka:
     client:
         serviceUrl:
-            defaultZone: http://127.0.0.1:8083/eureka/
+            defaultZone: http://localhost:8083/eureka/
 ```
 
 ## 解决服务端启动报错
@@ -268,47 +268,34 @@ eureka:
     client:
         # 配置eureka注册中心地址
         service-url: 
-            defaultZone: http://127.0.0.1:8083/eureka/
+            defaultZone: http://localhost:8083/eureka/
 ```
 
 ## 将`spring-cloud-eureka-client`项目作为`cloud-config-server-as-client-for-eureka`项目地配置客户端
 
-- 修改`spring-cloud-eureka-client`配置文件`bootstrap.yml`,配置如下
+- 修改`spring-cloud-eureka-client`配置文件`bootstrap.properties`,配置如下
 
-```yaml
-spring:
-    cloud:
-        config:
-            # 配置服务器地址
-            uri: http://127.0.0.1:8085
-            # 获取指定应用名称配置文件
-            name: user
-            # 配置文件所属环境
-            profile: test
-            # 配置文件标签
-            label: master
+```properties
+# 配置中心元信息
+spring.cloud.config.uri=http://localhost:8085
+spring.cloud.config.name=user
+spring.cloud.config.profile=test
+spring.cloud.config.label=master
 ```
 
-## 使用配置服务器名称替换URI引用
+## 使用配置服务器名称替换URI引用(生产环境)
 
-- 修改`spring-cloud-eureka-client`项目的配置文件`bootstrap.yml`,配置如下
+- 修改`spring-cloud-eureka-client`项目的配置文件`bootstrap.properties`,配置如下
 
-```yml
-spring:
-    cloud:
-        config:
-            # 获取指定应用名称配置文件
-            name: user
-            # 配置文件所属环境
-            profile: test
-            # 配置文件标签
-            label: master
-            # 替换spring.cloud.config.uri
-            discovery:
-                # 激活Config服务器发现
-                enabled: true
-                # Config应用服务器名称
-                service-id: spring-cloud-config-server-as-client-for-eureka
+```properties
+# 配置中心元信息
+spring.cloud.config.name=user
+spring.cloud.config.profile=test
+spring.cloud.config.label=master
+# 开启发现配置中心
+spring.cloud.config.discovery.enabled=true
+# 配置中心id(对应于配置中心名称)
+spring.cloud.config.discovery.service-id=spring-cloud-config-server-as-client-for-eureka
 ```
 
 ## 重启`spring-cloud-eureka-client`项目
@@ -323,17 +310,23 @@ java.lang.IllegalStateException: No instances found of configserver (spring-clou
 
 - 解决报错
 
-  - 修改项目的bootstrap.yml,添加如下配置
+  - 修改项目的bootstrap.properties,修改配置如下
 
-  ```yaml
-  eureka:
-      client:
-          service-url:
-              defaulZone: http://localhost:8083/eureka
+  ```properties
+  # 注册中心地址
+  eureka.client.service-url.defaultZone=http://localhost:8083/eureka
+  # 配置中心元信息
+  spring.cloud.config.name=user
+  spring.cloud.config.profile=test
+  spring.cloud.config.label=master
+  # 开启发现配置中心
+  spring.cloud.config.discovery.enabled=true
+  # 配置中心id(对应于配置中心名称)
+  spring.cloud.config.discovery.service-id=spring-cloud-config-server-as-client-for-eureka
   ```
 
-  
-  - 修改项目的application.yml
+
+  - 修改项目的`application.yml`配置文件如下
 
   ```yaml
   server:
@@ -344,7 +337,7 @@ java.lang.IllegalStateException: No instances found of configserver (spring-clou
       port: 9005
   spring:
       application:
-          name: "spring-cloud-eureka-client"
+          name: spring-cloud-eureka-client
   # 配置注册中心地址
   eureka:
       instance:
@@ -357,8 +350,11 @@ java.lang.IllegalStateException: No instances found of configserver (spring-clou
       age: 18
   ```
 
-  
+- 注意事项,相同配置情况下`spring-cloud-eureka-client`项目只能使用`bootstrap.properties`而不能是`bootstrap.yml`配置文件!!!
 
-  
+  > 否则任然会出现java.lang.IllegalStateException: No instances found of configserver (spring-cloud-config-server-as-client-for-eureka)
 
-  
+  - 原因(官方文档所示)
+
+  > YAML files can’t be loaded via the `@PropertySource` annotation. So in the case that you need to load values that way, you need to use a properties file.
+
