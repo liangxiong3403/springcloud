@@ -10,6 +10,9 @@
         <module>cloud-server-eureka</module>
         <module>cloud-client-eureka</module>
         <module>cloud-config-server-as-client-for-eureka</module>
+        <module>cloud-client-consul</module>
+        <module>cloud-client-eureka-high-available</module>
+        <module>cloud-server-eureka-high-available</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -97,6 +100,21 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-config-server-as-client-for-eureka</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-client-consul</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-client-eureka-high-available</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-server-eureka-high-available</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>

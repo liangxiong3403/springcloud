@@ -1,0 +1,16 @@
+# 第二个注册中心
+server:
+    port: 18088
+# 与peer1节点同步数据
+peer1:
+    server:
+        host: localhost
+        port: 8088
+# 配置eureka注册中心数据同步
+eureka:
+    client:
+        # 连接集群中另外地注册中心
+        service-url:
+            defaultZone: http://${peer1.server.host}:${peer1.server.port}/eureka
+management:
+    port: 19009

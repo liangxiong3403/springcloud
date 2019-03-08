@@ -31,3 +31,6 @@ hs_err_pid*
 /cloud-client-eureka/target/
 /cloud-config-server-as-client-for-eureka/target/
 /cloud-server-eureka/target/
+/cloud-server-eureka-high-available/target/
+/cloud-client-eureka-high-available/target/
+/cloud-client-consul/target/
