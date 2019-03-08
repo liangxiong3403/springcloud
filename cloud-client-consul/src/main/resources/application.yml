@@ -1,6 +1,14 @@
 server:
-    port: 8086
+    port: 28086
 management:
-    port: 9007
+    port: 29007
     security:
         enabled: false
+spring:
+    application:
+        name: spring-cloud-consul-client
+# 接入consul
+    cloud:
+        consul:
+            host: localhost
+            port: 8500

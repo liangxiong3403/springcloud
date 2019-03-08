@@ -234,6 +234,8 @@ spring:
 
 ## Spring Cloud Consul
 
+> Consul uses a gossip protocol to manage membership and broadcast messages to the cluster. All of this is provided through the use of the Serf library. The gossip protocol used by Serf is based on "SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol", with a few minor adaptations.
+
 - 下载
 
 ```tex
@@ -244,6 +246,207 @@ https://www.consul.io/downloads.html
 - 启动agent
 
 ```shell
- .\consul.exe agent -bind="127.0.0.1" --data-dir=F:\temp\consul
+ .\consul.exe agent -dev --data-dir=F:\temp\consul
 ```
+
+- kv存储
+
+  - 添加数据操作
+
+    ```shell
+    .\consul.exe kv put name xiangqian
+    ```
+
+  - 获取操作
+
+    ```shell
+    .\consul.exe kv get name
+    ```
+
+  - 删除操作
+
+    ```shell
+    .\consul.exe kv delete name
+    ```
+
+- 通过UI方式启动Consul
+
+  ```shell
+   .\consul.exe agent -ui -dev --data-dir=F:\temp\consul
+  ```
+
+- 访问Consul界面
+
+  ```shell
+  http://127.0.0.1:8500
+  ```
+
+- 自定义节点名称为diynode,数据中心名称为diycenter
+
+  ```shell
+   .\consul.exe agent -ui -dev -node diynode -datacenter diycenter --data-dir=F:\temp\consul
+  ```
+
+- 非开发模式启动
+
+  > 开发模式,数据保存在内存中;重启以后,数据丢失
+
+  ```shell
+   .\consul.exe agent -ui -node diynode -datacenter diycenter -bind="127.0.0.1" --data-dir=F:\temp\consul
+  ```
+
+- 启动报错
+
+  ```tex
+  500 (The backend responded with an error)
+  ```
+
+- 解决启动报错,设置agent模式为bootstrap模式( Sets server to bootstrap mode并且Switches agent to server mode.)
+
+  ```shell
+   .\consul.exe agent -bootstrap -server -ui -node diynode -datacenter diycenter -bind="127.0.0.1" --data-dir=F:\temp\consul
+  ```
+
+### Spring Cloud整合Consul
+
+- 注意事项
+
+  > The use of `@EnableDiscoveryClient` is no longer required. It is enough to just have a `DiscoveryClient` implementation on the classpath to cause the Spring Boot application to register with the service discovery server.
+
+- 引入依赖
+
+  ```xml
+  <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-consul-discovery</artifactId>
+  </dependency>
+  ```
+
+- 开启配置
+
+  ```yaml
+  server:
+      port: 8086
+  management:
+      port: 9007
+      security:
+          enabled: false
+  spring:
+      application:
+          name: spring-cloud-consul-client
+  # 接入consul
+      cloud:
+          consul:
+              host: localhost
+              port: 8500
+  ```
+
+- 访问consul服务器,查看client是否被正确识别
+
+  ```tex
+  http://127.0.0.1:8500/ui/diycenter/services
+  ```
+
+- 开启discoveryClient发现
+
+  ```java
+  package org.liangxiong.consul;
+  
+  import org.springframework.boot.SpringApplication;
+  import org.springframework.boot.autoconfigure.SpringBootApplication;
+  import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-08
+   * @Time:8:50
+   * @Description Consul作为客户端, 从Edgware版本开始EnableDiscoveryClient注解不是必须地
+   */
+  @EnableDiscoveryClient
+  @SpringBootApplication
+  public class ConsulClientApplication {
+  
+      public static void main(String[] args) {
+          SpringApplication.run(ConsulClientApplication.class, args);
+      }
+  }
+  ```
+
+- 自定义类,获取所有服务实例信息
+
+```java
+package org.liangxiong.consul.controller;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.LinkedList;
+import java.util.List;
+
+/**
+ * {@link DiscoveryClient} {@link RestController}
+ *
+ * @author liangxiong
+ * @Date:2019-03-08
+ * @Time:16:55
+ * @Description DiscoveryClient实现
+ */
+@RestController
+public class DiscoveryClientController {
+
+    private final DiscoveryClient discoveryClient;
+
+    @Value("${spring.application.name}")
+    private String currentApplicationName;
+
+    public DiscoveryClientController(DiscoveryClient discoveryClient) {
+        this.discoveryClient = discoveryClient;
+    }
+
+    /**
+     * 获取所有服务实例名称列表
+     *
+     * @return
+     */
+    @GetMapping("/discovery/services")
+    public List<String> getAllServices() {
+        return discoveryClient.getServices();
+    }
+
+    /**
+     * 获取当前实例信息
+     *
+     * @return
+     */
+    @GetMapping("/discovery/service-current")
+    public ServiceInstance getCurrentApplicationInfo() {
+        List<ServiceInstance> serviceInstances = discoveryClient.getInstances(currentApplicationName);
+        if (!CollectionUtils.isEmpty(serviceInstances)) {
+            return serviceInstances.get(0);
+        }
+        return null;
+    }
+
+    /**
+     * 获取所有服务实例信息
+     */
+    @GetMapping("/discovery/instances")
+    public List<ServiceInstance> getAllApplicationInfo() {
+        List<String> serviceNames = getAllServices();
+        List<ServiceInstance> serviceInstances = new LinkedList<>();
+        serviceNames.forEach(serviceName ->
+                serviceInstances.addAll(discoveryClient.getInstances(serviceName))
+        );
+        return serviceInstances;
+    }
+}
+```
+
+
+
+
 
