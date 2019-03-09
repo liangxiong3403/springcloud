@@ -20,7 +20,7 @@
   ```xml
   <dependency>
       <groupId>org.springframework.cloud</groupId>
-      <artifactId>spring-cloud-starter-ribbon</artifactId>
+      <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
   </dependency>
   ```
 
