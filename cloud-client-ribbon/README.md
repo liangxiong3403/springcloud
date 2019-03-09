@@ -70,7 +70,7 @@
                   name: spring-cloud-user-server
               host: localhost
               port: 8090
-  # 配置ribbon服务提供方
+  # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
   spring-cloud-user-service:
       ribbon:
           listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
@@ -345,6 +345,8 @@
 ## 通过修改端口,模拟两个`cloud-server-user`
 
 > --server.port=18090 --management.port=19011
+>
+> --server.port=28090 --management.port=29011
 
 ## 访问`http://localhost:8089/ribbon/remote/user`
 
