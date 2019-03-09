@@ -1,0 +1,14 @@
+server:
+    port: 8090
+management:
+    port: 9011
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-user-server
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8083/eureka/
+        registry-fetch-interval-seconds: 15

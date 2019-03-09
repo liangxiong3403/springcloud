@@ -13,6 +13,8 @@
         <module>cloud-client-consul</module>
         <module>cloud-client-eureka-high-available</module>
         <module>cloud-server-eureka-high-available</module>
+        <module>cloud-client-ribbon</module>
+        <module>cloud-server-user</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -60,6 +62,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.49</version>
         </dependency>
     </dependencies>
 
@@ -115,6 +122,16 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-server-eureka-high-available</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-client-ribbon</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-server-user</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>

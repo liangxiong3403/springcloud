@@ -300,3 +300,35 @@ org.liangxiong.springcloud.config.CustomBootstrapConfiguration,\
 org.liangxiong.springcloud.config.CustomPropertySourceLocator
 ```
 
+# 项目组合关系
+
+## Spring Cloud配置入门
+
+- cloud-common
+
+## 普通配置服务器和客户端
+
+- cloud-config-server-git
+- cloud-config-client-git
+
+## Eureka客户端和服务端
+
+- cloud-server-eureka
+- cloud-client-eureka
+- cloud-config-server-as-client-for-eureka(也是作为eureka客户端,同时作为配置中心)
+
+## Eureka高可用
+
+- cloud-client-eureka-high-available
+- cloud-server-eureka-high-available
+
+## Spring Cloud Consul与Eureka客户端集成
+
+- cloud-client-consul
+- consul本地安装应用程序(hostname:localhost,port:8500)
+
+## 负载均衡
+
+- cloud-server-eureka(注册中心)
+- cloud-client-ribbon
+- cloud-server-user(服务提供方)

@@ -22,4 +22,4 @@ eureka:
         fetch-registry: false
         # 自己作为自己的副本,防止集群副本连接8761端口报错(当前cloud版本必须这样写)
         service-url:
-            defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka
+            defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/

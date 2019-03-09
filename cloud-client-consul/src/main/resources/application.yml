@@ -1,7 +1,7 @@
 server:
-    port: 28086
+    port: 8086
 management:
-    port: 29007
+    port: 9007
     security:
         enabled: false
 spring:

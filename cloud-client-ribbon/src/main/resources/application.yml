@@ -1,0 +1,27 @@
+server:
+    port: 8089
+management:
+    port: 9010
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-ribbon-client
+# 服务提供方配置信息
+remote:
+    service:
+        provider:
+            application:
+                name: spring-cloud-user-server
+            host: localhost
+            port: 8090
+# 配置ribbon服务提供方
+#spring-cloud-user-server:
+#    ribbon:
+#        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+# 配置eureka服务端信息
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8083/eureka/
+        registry-fetch-interval-seconds: 15
