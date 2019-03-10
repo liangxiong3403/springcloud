@@ -1,3 +1,0 @@
-org.springframework.cloud.bootstrap.BootstrapConfiguration=\
-org.liangxiong.springcloud.config.CustomBootstrapConfiguration,\
-org.liangxiong.springcloud.config.CustomPropertySourceLocator
