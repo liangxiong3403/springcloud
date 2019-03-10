@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <packaging>pom</packaging>
     <modules>
-        <module>cloud-common</module>
+        <module>cloud-config-introduction</module>
         <module>cloud-config-server-git</module>
         <module>cloud-config-client-git</module>
         <module>cloud-server-eureka</module>
@@ -15,6 +15,7 @@
         <module>cloud-server-eureka-high-available</module>
         <module>cloud-client-ribbon</module>
         <module>cloud-server-user</module>
+        <module>cloud-api-user</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -81,7 +82,7 @@
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
-                <artifactId>cloud-common</artifactId>
+                <artifactId>cloud-config-introduction</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -132,6 +133,11 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-server-user</artifactId>
+                <version>0.0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-api-user</artifactId>
                 <version>0.0.1-SNAPSHOT</version>
             </dependency>
         </dependencies>

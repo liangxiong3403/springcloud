@@ -16,12 +16,13 @@ remote:
             host: localhost
             port: 8090
 # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
-#spring-cloud-user-server:
-#    ribbon:
-#        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+spring-cloud-user-server:
+    ribbon:
+        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
 # 配置eureka服务端信息
 eureka:
     client:
-        service-url:
-            defaultZone: http://localhost:8083/eureka/
-        registry-fetch-interval-seconds: 15
+#        service-url:
+#            defaultZone: http://localhost:8083/eureka/
+#        registry-fetch-interval-seconds: 15
+        enabled: false

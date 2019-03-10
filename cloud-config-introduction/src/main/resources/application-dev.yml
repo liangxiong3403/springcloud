@@ -1,0 +1,16 @@
+# web服务器端口
+server:
+    port: 8080
+endpoints:
+    restart:
+        # 开启端点
+        enabled: true
+        # 关闭安全
+        sensitive: false
+management:
+    security:
+        enabled: false
+    port: 9001
+spring:
+    application:
+        name: spring-cloud-config-introduction

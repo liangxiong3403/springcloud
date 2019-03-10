@@ -12,7 +12,7 @@ import org.springframework.cloud.netflix.ribbon.RibbonClients;
  * @Time:9:50
  * @Description 客户端负载均衡,@RibbonClient激活ribbon客户端,Edgware版本开始,@EnableEurekaClient或@EnableDiscoveryClient是非必需地
  */
-@EnableDiscoveryClient
+//@EnableDiscoveryClient
 @RibbonClients(@RibbonClient(name = "spring-cloud-ribbon-client"))
 @SpringBootApplication
 public class RibbonClientApplication {

@@ -10,18 +10,11 @@
     <artifactId>cloud-config-client-git</artifactId>
     <name>cloud-config-client-git</name>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
     <dependencies>
+        <!-- config client相关依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
     </dependencies>
-    <build>
-        <finalName>${project.name}</finalName>
-    </build>
 </project>

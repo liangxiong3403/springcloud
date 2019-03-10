@@ -12,13 +12,20 @@
     <name>cloud-client-ribbon</name>
 
     <dependencies>
+        <!-- ribbon相关依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
         </dependency>
+        <!-- eureka client相关依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <!-- user api依赖 -->
+        <dependency>
+            <groupId>org.liangxiong</groupId>
+            <artifactId>cloud-api-user</artifactId>
         </dependency>
     </dependencies>
 

@@ -25,7 +25,7 @@
 hs_err_pid*
 *.iml
 .idea
-/cloud-common/target/
+/cloud-api-user/target/
 /cloud-config-client-git/target/
 /cloud-config-server-git/target/
 /cloud-client-eureka/target/
@@ -36,3 +36,4 @@ hs_err_pid*
 /cloud-client-consul/target/
 /cloud-client-ribbon/target/
 /cloud-server-user/target/
+/cloud-config-introduction/target/

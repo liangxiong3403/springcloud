@@ -367,3 +367,18 @@
 ### 缺点
 
 - 单点故障
+
+# Ribbon源码分析
+
+## org.springframework.cloud.client.loadbalancer.LoadBalancerClient
+
+### 主要功能
+
+- 将服务实例名称`spring-cloud-user-server`转化为IP:PORT形式
+- 通过负载均衡算法,选择一台服务器
+- 确定服务器后,进行回调操作
+
+### 默认实现
+
+- org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient
+

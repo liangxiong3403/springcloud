@@ -1,4 +1,4 @@
-package org.liangxiong.server;
+package org.liangxiong.server.provider;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

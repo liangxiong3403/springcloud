@@ -1,15 +1,19 @@
 package org.liangxiong.ribbon.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.liangxiong.cloud.api.domain.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author liangxiong
@@ -17,6 +21,7 @@ import java.util.HashMap;
  * @Time:11:30
  * @Description ribbon作为客户端Controller
  */
+@Slf4j
 @RequestMapping("/ribbon")
 @RestController
 public class RibbonClientController {
@@ -42,7 +47,16 @@ public class RibbonClientController {
     @Autowired
     private RestTemplate restTemplate;
 
-    @PostMapping("/remote/user")
+    @Autowired
+    private LoadBalancerClient loadBalancerClient;
+
+    /**
+     * 添加用户
+     *
+     * @param params
+     * @return
+     */
+    @PostMapping("/remote/users")
     public Object getRemoteUser(@RequestBody JSONObject params) {
         StringBuffer url = new StringBuffer();
         // 方式一
@@ -50,6 +64,30 @@ public class RibbonClientController {
         // 方式二
         url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
         return restTemplate.postForObject(url.toString(), params, HashMap.class);
+    }
+
+    /**
+     * 获取所有用户
+     *
+     * @return
+     */
+    @GetMapping("/remote/users")
+    public List<User> listAllUsers() {
+        // 根据服务实例名称获取实例对象
+        ServiceInstance serviceInstance = loadBalancerClient.choose(remoteServiceProviderApplicationName);
+        try {
+            return loadBalancerClient.execute(remoteServiceProviderApplicationName, serviceInstance, e -> {
+                RestTemplate restTemplate = new RestTemplate();
+                String host = e.getHost();
+                int port = e.getPort();
+                StringBuffer url = new StringBuffer();
+                url.append("http://").append(host).append(":").append(port).append("/users");
+                return restTemplate.getForObject(url.toString(), List.class);
+            });
+        } catch (IOException e) {
+            log.error("remote execute error: {}", e.getMessage());
+        }
+        return Collections.emptyList();
     }
 
 }

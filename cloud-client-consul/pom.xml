@@ -12,6 +12,7 @@
     <artifactId>cloud-client-consul</artifactId>
 
     <dependencies>
+        <!-- consul相关依赖,本地需安装consul客户端 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-consul-discovery</artifactId>

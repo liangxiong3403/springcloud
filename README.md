@@ -304,7 +304,7 @@ org.liangxiong.springcloud.config.CustomPropertySourceLocator
 
 ## Spring Cloud配置入门
 
-- cloud-common
+- cloud-config-introduction
 
 ## 普通配置服务器和客户端
 
@@ -332,3 +332,4 @@ org.liangxiong.springcloud.config.CustomPropertySourceLocator
 - cloud-server-eureka(注册中心)
 - cloud-client-ribbon
 - cloud-server-user(服务提供方)
+- cloud-api-user

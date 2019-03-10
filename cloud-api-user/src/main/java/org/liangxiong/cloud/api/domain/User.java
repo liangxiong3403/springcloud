@@ -1,4 +1,4 @@
-package org.liangxiong.server.domain;
+package org.liangxiong.cloud.api.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +16,11 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
+
+    /**
+     * 用户id
+     */
+    private Integer userId;
 
     /**
      * 用户名

@@ -12,9 +12,15 @@
     <name>cloud-server-user</name>
 
     <dependencies>
+        <!-- eureka client相关依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+        <!-- user api相关依赖 -->
+        <dependency>
+            <groupId>org.liangxiong</groupId>
+            <artifactId>cloud-api-user</artifactId>
         </dependency>
     </dependencies>
 </project>

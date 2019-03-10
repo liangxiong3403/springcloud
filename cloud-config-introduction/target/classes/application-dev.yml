@@ -13,4 +13,4 @@ management:
     port: 9001
 spring:
     application:
-        name: spring-boot-common
+        name: spring-cloud-config-introduction
