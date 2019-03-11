@@ -73,7 +73,7 @@
   # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
   spring-cloud-user-service:
       ribbon:
-          listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+          listOfServers: rule
   ```
 
 - 配置RestTemplate
@@ -370,6 +370,8 @@
 
 # Ribbon源码分析
 
+> Ribbon客户端和User服务端直连测试分析源代码,没有通过eureka注册中心
+
 ## org.springframework.cloud.client.loadbalancer.LoadBalancerClient
 
 ### 主要功能
@@ -381,4 +383,405 @@
 ### 默认实现
 
 - org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration#loadBalancerClient
+
+## com.netflix.loadbalancer.LoadBalancerContext
+
+### 主要功能
+
+- 将服务实例名称`spring-cloud-user-server`转化为IP:PORT形式
+- 关联RetryHandler和ILoadBalancer
+- 记录服务统计信息,记录请求响应时间,记录请求错误数量
+
+### 默认实现
+
+- org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerContext
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration#ribbonLoadBalancerContext
+
+## com.netflix.loadbalancer.ILoadBalancer(负载均衡器抽象)
+
+### 主要功能
+
+- 添加服务器
+- 选择服务器/获取所有服务器等
+- 标记服务器下线
+
+### 默认实现
+
+- com.netflix.loadbalancer.ZoneAwareLoadBalancer
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration#ribbonLoadBalancer
+
+## com.netflix.loadbalancer.IRule
+
+### 主要功能
+
+- 获取可用服务器:根据负载均衡算法和服务器key获取可用服务器
+
+### 默认实现
+
+- com.netflix.loadbalancer.ZoneAvoidanceRule
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration#ribbonRule
+
+##　com.netflix.loadbalancer.IPing
+
+### 主要功能
+
+- 根据指定服务器,判断其是否存活
+
+### 默认实现
+
+- com.netflix.loadbalancer.DummyPing
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration#ribbonPing
+
+## com.netflix.loadbalancer.ServerList
+
+### 主要功能
+
+- 获取初始化服务列表
+- 获取更新后服务列表
+
+### 默认实现
+
+- com.netflix.loadbalancer.ConfigurationBasedServerList(**Ribbon原生模式**)
+
+  ```yaml
+  server:
+      port: 8089
+  management:
+      port: 9010
+      security:
+          enabled: false
+  spring:
+      application:
+          name: spring-cloud-ribbon-client
+  # 服务提供方配置信息
+  remote:
+      service:
+          provider:
+              application:
+                  name: spring-cloud-user-server
+              host: localhost
+              port: 8090
+  # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+  spring-cloud-user-server:
+      ribbon:
+          listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+  # 配置eureka服务端信息
+  eureka:
+      client:
+  #        service-url:
+  #            defaultZone: http://localhost:8083/eureka/
+  #        registry-fetch-interval-seconds: 15
+          enabled: false
+  ```
+
+- com.netflix.niws.loadbalancer.DiscoveryEnabledNIWSServerList(**Eureka客户端模式**)
+
+  ```yaml
+  server:
+      port: 8089
+  management:
+      port: 9010
+      security:
+          enabled: false
+  spring:
+      application:
+          name: spring-cloud-ribbon-client
+  # 服务提供方配置信息
+  remote:
+      service:
+          provider:
+              application:
+                  name: spring-cloud-user-server
+              host: localhost
+              port: 8090
+  # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+  #spring-cloud-user-server:
+  #    ribbon:
+  rule
+  # 配置eureka服务端信息
+  eureka:
+      client:
+          service-url:
+              defaultZone: http://localhost:8083/eureka/
+          registry-fetch-interval-seconds: 15
+  ```
+
+### 自动装配源
+
+- org.springframework.cloud.netflix.ribbon.RibbonClientConfiguration#ribbonServerList
+
+## 自动装配类
+
+### org.springframework.cloud.netflix.ribbon.RibbonAutoConfiguration
+
+- LoadBalancerClient
+- PropertiesFactory
+
+### org.springframework.cloud.client.loadbalancer.LoadBalancerAutoConfiguration
+
+- RestTemplate
+- @LoadBalanced
+
+# 调用链路分析
+
+## 自定义代码
+
+```java
+@GetMapping("/remote/users")
+public List<User> listAllUsers() {
+    // 根据服务实例名称获取实例对象(此刻端点调试)
+    ServiceInstance serviceInstance = loadBalancerClient.choose(remoteServiceProviderApplicationName);
+    try {
+        return loadBalancerClient.execute(remoteServiceProviderApplicationName, serviceInstance, request -> {
+            RestTemplate restTemplate = new RestTemplate();
+            // 通过serviceInstance获取本地请求主机地址
+            String host = request.getHost();
+            // 通过serviceInstance获取本地请求主机端口
+            int port = request.getPort();
+            StringBuffer url = new StringBuffer();
+            // 构造真实URL
+            url.append("http://").append(host).append(":").append(port).append("/users");
+            return restTemplate.getForObject(url.toString(), List.class);
+        });
+    } catch (IOException e) {
+        log.error("remote execute error: {}", e.getMessage());
+    }
+    return Collections.emptyList();
+}
+```
+
+> 代码调试
+>
+> ServiceInstance serviceInstance = loadBalancerClient.choose(remoteServiceProviderApplicationName);
+
+- 第一步
+
+> org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient#choose
+
+- 第二步
+
+> com.netflix.loadbalancer.ZoneAwareLoadBalancer#chooseServer
+
+- 第三步
+
+> com.netflix.loadbalancer.BaseLoadBalancer#chooseServer
+
+- 第四步
+
+> com.netflix.loadbalancer.PredicateBasedRule#choose
+
+# 自定义实现Rule
+
+## 自定义bean实现IRule
+
+```JAVA
+package org.liangxiong.ribbon.rule;
+
+import com.netflix.client.config.IClientConfig;
+import com.netflix.loadbalancer.AbstractLoadBalancerRule;
+import com.netflix.loadbalancer.ILoadBalancer;
+import com.netflix.loadbalancer.Server;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import java.util.List;
+import java.util.Random;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-11
+ * @Time:14:21
+ * @Description 自定义实现IRule规则
+ */
+@Component
+public class DiyRuleImpl extends AbstractLoadBalancerRule {
+
+    @Override
+    public void initWithNiwsConfig(IClientConfig clientConfig) {
+
+    }
+
+    @Override
+    public Server choose(Object key) {
+        Random random = new Random();
+        // 获取负载均衡器
+        ILoadBalancer loadBalancer = getLoadBalancer();
+        // 获取可用服务列表
+        List<Server> servers = loadBalancer.getReachableServers();
+        if (!CollectionUtils.isEmpty(servers)) {
+            // 随机获取一台可用服务
+            return servers.get(random.nextInt(servers.size()));
+        }
+        return null;
+    }
+}
+```
+
+## `cloud-client-ribbon`配置文件application.yml
+
+> 原生ribbon方式,直接通过服务名称连接到服务provider
+
+```yaml
+server:
+    port: 8089
+management:
+    port: 9010
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-ribbon-client
+# 服务提供方配置信息
+remote:
+    service:
+        provider:
+            application:
+                name: spring-cloud-user-server
+            host: localhost
+            port: 8090
+        provider2:
+            application:
+                name: spring-cloud-user-server
+            host: localhost
+            port: 18090
+# 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+spring-cloud-user-server:
+    ribbon:
+        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
+# 配置eureka服务端信息
+eureka:
+#    client:
+#        service-url:
+#            defaultZone: http://localhost:8083/eureka/
+#        registry-fetch-interval-seconds: 15
+		# 引入eureka客户端依赖后,临时关闭eureka客户端功能
+        enabled: false
+```
+
+## `cloud-server-user`配置文件application.yml
+
+```yaml
+server:
+    port: 8090
+management:
+    port: 9011
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-user-server
+eureka:
+#    client:
+#        service-url:
+#            defaultZone: http://localhost:8083/eureka/
+#        registry-fetch-interval-seconds: 15
+		# 引入eureka客户端依赖后,临时关闭eureka客户端功能
+        enabled: false
+```
+
+# 自定义实现IPing
+
+> 参考Spring Cloud官方文档:16.4 Customizing the Ribbon Client using properties
+
+## 自定义bean实现IPing
+
+```java
+package org.liangxiong.ribbon.ping;
+
+import com.netflix.loadbalancer.IPing;
+import com.netflix.loadbalancer.Server;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.List;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-11
+ * @Time:15:00
+ * @Description 自定义实现IPing规则
+ */
+public class DiyPingImpl implements IPing {
+
+    @Override
+    public boolean isAlive(Server server) {
+        String host = server.getHost();
+        int port = server.getPort();
+        // Spring 工具类构建
+        UriComponentsBuilder builder = UriComponentsBuilder.newInstance();
+        builder.scheme("http");
+        builder.host(host);
+        builder.port(port);
+        builder.path("/users");
+        URI uri = builder.build().toUri();
+        // 发送请求
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity responseEntity = restTemplate.getForEntity(uri, List.class);
+        // 判断响应状态码
+        return HttpStatus.OK.equals(responseEntity.getStatusCode());
+    }
+}
+```
+
+## 修改`cloud-client-ribbon`配置文件application.yml
+
+```yaml
+server:
+    port: 8089
+management:
+    port: 9010
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-ribbon-client
+# 服务提供方配置信息
+remote:
+    service:
+        provider:
+            application:
+                name: spring-cloud-user-server
+            host: localhost
+            port: 8090
+        provider2:
+            application:
+                name: spring-cloud-user-server
+            host: localhost
+            port: 18090
+# 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+spring-cloud-user-server:
+    ribbon:
+        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
+        # 通过配置方式引入自定义IPing实现类
+        NFLoadBalancerPingClassName: org.liangxiong.ribbon.ping.DiyPingImpl
+# 配置eureka服务端信息
+eureka:
+#    client:
+#        service-url:
+#            defaultZone: http://localhost:8083/eureka/
+#        registry-fetch-interval-seconds: 15
+#        # 引入eureka客户端依赖后,临时关闭eureka客户端功能
+        enabled: false
+```
+
+
 

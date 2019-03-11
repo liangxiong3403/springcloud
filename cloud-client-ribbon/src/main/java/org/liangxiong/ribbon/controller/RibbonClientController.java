@@ -76,11 +76,14 @@ public class RibbonClientController {
         // 根据服务实例名称获取实例对象
         ServiceInstance serviceInstance = loadBalancerClient.choose(remoteServiceProviderApplicationName);
         try {
-            return loadBalancerClient.execute(remoteServiceProviderApplicationName, serviceInstance, e -> {
+            return loadBalancerClient.execute(remoteServiceProviderApplicationName, serviceInstance, request -> {
                 RestTemplate restTemplate = new RestTemplate();
-                String host = e.getHost();
-                int port = e.getPort();
+                // 通过serviceInstance获取本地请求主机地址
+                String host = request.getHost();
+                // 通过serviceInstance获取本地请求主机端口
+                int port = request.getPort();
                 StringBuffer url = new StringBuffer();
+                // 构造真实URL
                 url.append("http://").append(host).append(":").append(port).append("/users");
                 return restTemplate.getForObject(url.toString(), List.class);
             });
