@@ -9,7 +9,6 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author liangxiong
@@ -35,7 +34,7 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
     private JSONObject params;
 
     public DiyHystrixCommand(String groupName, String remoteServiceProviderApplicationName, RestTemplate restTemplate) {
-        super(HystrixCommandGroupKey.Factory.asKey(groupName), 3000);
+        super(HystrixCommandGroupKey.Factory.asKey(groupName), 20);
         this.remoteServiceProviderApplicationName = remoteServiceProviderApplicationName;
         this.restTemplate = restTemplate;
     }
@@ -54,10 +53,6 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
     public Object run() throws Exception {
         StringBuffer url = new StringBuffer();
         url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
-        // 模拟客户端超时
-        int second = random.nextInt(5);
-        log.info("client execution time: {}", second);
-        TimeUnit.SECONDS.sleep(second);
         return restTemplate.postForObject(url.toString(), params, HashMap.class);
     }
 
@@ -66,6 +61,7 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
      */
     @Override
     public Object getFallback() {
+        log.error("client execution timeout!");
         return Collections.emptyMap();
     }
 }

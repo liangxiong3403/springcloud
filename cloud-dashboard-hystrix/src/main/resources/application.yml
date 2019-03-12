@@ -1,9 +1,7 @@
 server:
     port: 8091
-    error:
-        path: /diyErrorPath
 management:
-    port: 9012
+#    port: 9012
     security:
         enabled: false
 spring:

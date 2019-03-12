@@ -41,17 +41,14 @@ public class UserController {
      * @param user 用户实体
      * @return
      */
-    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000")})
     @PostMapping
     public Object addUser(@RequestBody User user) {
         JSONObject result = new JSONObject(8);
-        result.put("name", user.getUsername());
+        result.put("username", user.getUsername());
         result.put("age", user.getAge());
         result.put("userId", user.getUserId());
         // 区分服务端
         result.put("serverPort", port);
-        // 模拟超时
-        timeout();
         return userService.addUser(user) ? result : new HashMap<Integer, Object>(8);
     }
 
@@ -62,7 +59,7 @@ public class UserController {
      *
      * @return
      */
-    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000")})
+//    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")})
     @GetMapping
     public List<User> listAllUser() {
         // 模拟超时
@@ -83,7 +80,6 @@ public class UserController {
      * 模拟超时
      */
     private void timeout() {
-        // 模拟超时
         try {
             int second = random.nextInt(5);
             log.info("server execution time: {}", second);

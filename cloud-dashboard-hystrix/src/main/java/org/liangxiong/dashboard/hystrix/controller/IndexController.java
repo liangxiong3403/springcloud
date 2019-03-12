@@ -26,9 +26,4 @@ public class IndexController {
         }
         return "welcome to hystrix application!";
     }
-
-    @GetMapping("/diyErrorPath")
-    public String diyErrorPath() {
-        return "server error";
-    }
 }

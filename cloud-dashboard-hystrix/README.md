@@ -1,4 +1,4 @@
-# CircuitBreaker(短路器)
+# CircuitBreaker(断路器)
 
 > 概念来源于
 >
@@ -28,7 +28,6 @@ public class ExceptionConfiguration {
     public String handlerControllerException(TimeoutException e) {
         return e.getMessage();
     }
-
 }
 ```
 
@@ -43,7 +42,7 @@ public class ExceptionConfiguration {
 </dependency>
 ```
 
-## `@EnableHystrix`激活hystrix
+## `@EnableHystrix`激活`hystrix服务端`
 
 ```java
 package org.liangxiong.server.provider;
@@ -65,7 +64,7 @@ public class UserProviderApplication {
 }
 ```
 
-## `@HystrixCommand`设置服务提供方地超时配置
+## `@HystrixCommand`设置服务提供方的超时配置
 
 ```java
 package org.liangxiong.server.provider.controller;
@@ -95,7 +94,6 @@ public class UserController {
      * @param user 用户实体
      * @return
      */
-    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "2000")})
     @PostMapping
     public Object addUser(@RequestBody User user) {
         JSONObject result = new JSONObject(8);
@@ -104,8 +102,6 @@ public class UserController {
         result.put("userId", user.getUserId());
         // 区分服务端
         result.put("serverPort", port);
-        // 模拟超时
-        timeout();
         return userService.addUser(user) ? result : new HashMap<Integer, Object>(8);
     }
 
@@ -195,6 +191,7 @@ package org.liangxiong.ribbon.component;
  * @Time:15:22
  * @Description
  */
+@Slf4j
 public class DiyHystrixCommand extends HystrixCommand<Object> {
 
     /**
@@ -212,7 +209,7 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
     private JSONObject params;
 
     public DiyHystrixCommand(String groupName, String remoteServiceProviderApplicationName, RestTemplate restTemplate) {
-        super(HystrixCommandGroupKey.Factory.asKey(groupName), 2000);
+        super(HystrixCommandGroupKey.Factory.asKey(groupName), 20);
         this.remoteServiceProviderApplicationName = remoteServiceProviderApplicationName;
         this.restTemplate = restTemplate;
     }
@@ -231,9 +228,6 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
     public Object run() throws Exception {
         StringBuffer url = new StringBuffer();
         url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
-        // 模拟客户端超时
-        int second = random.nextInt(5);
-        TimeUnit.SECONDS.sleep(second);
         return restTemplate.postForObject(url.toString(), params, HashMap.class);
     }
 
@@ -241,8 +235,9 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
      * 回调方法用于熔断恢复
      */
     @Override
-    public List getFallback() {
-        return Collections.emptyList();
+    public Object getFallback() {
+        log.error("client execution timeout!");
+        return Collections.emptyMap();
     }
 }
 ```
@@ -346,12 +341,136 @@ public class RibbonClientController {
 ## 客户端调用报错
 
 ```tex
-java.lang.IllegalStateException: Request URI does not contain a valid hostname: 
+com.netflix.hystrix.exception.HystrixRuntimeException: DiyHystrixCommand command executed multiple times - this is not permitted.
+...
+Caused by: java.lang.IllegalStateException: This instance can only be executed once. Please instantiate a new instance.
 ```
 
 - 原因是没有将remoteServiceProviderApplicationName进行正确解析
 - 解决报错
 
+```java
+package org.liangxiong.ribbon.controller;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-09
+ * @Time:11:30
+ * @Description ribbon作为客户端Controller
+ */
+@Slf4j
+@RequestMapping("/ribbon")
+@RestController
+public class RibbonClientController {
+
+    /**
+     * 远程服务提供方主机
+     */
+    @Value("${remote.service.provider.host}")
+    private String remoteServiceProviderHost;
+
+    /**
+     * 远程服务提供方端口
+     */
+    @Value("${remote.service.provider.port}")
+    private String remoteServiceProviderPort;
+
+    /**
+     * 远程服务提供方名称
+     */
+    @Value("${remote.service.provider.application.name}")
+    private String remoteServiceProviderApplicationName;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private LoadBalancerClient loadBalancerClient;
+
+    private DiyHystrixCommand diyHystrixCommand;
+
+    /**
+     * 添加用户
+     *
+     * @param params
+     * @return
+     */
+    @PostMapping("/remote/users")
+    public Object addRemoteUser(@RequestBody JSONObject params) {
+        try {
+            // 解决调用报错
+            this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client", remoteServiceProviderApplicationName, restTemplate);
+            // 设置参数
+            diyHystrixCommand.setParams(params);
+            // 自定义hystrix的command实现
+            return diyHystrixCommand.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error("remote call failure: {}", e.getMessage());
+        }
+        return null;
+    }
+
+}
+```
+
+# 配置Hystrix的Dashboard
+
+## 项目`cloud-dashboard-hystrix`添加依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix-dashboard</artifactId>
+</dependency>
+```
+
+## 激活dashboard
+
+```java
+package org.liangxiong.dashboard.hystrix;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-12
+ * @Time:9:42
+ * @Description Hystrix Dashboard
+ */
+@EnableHystrixDashboard
+@SpringBootApplication
+public class HystrixDashboardApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(HystrixDashboardApplication.class, args);
+    }
+}
+```
+
+## 项目配置文件
+
+```yaml
+server:
+    port: 8091
+management:
+    port: 9012
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-hystrix-dashboard
+```
+
+## dashboard访问页面
+
+> `http://localhost:8091/hystrix `输入`http://localhost:9010/hystrix.stream`
+
+```java
+
+```
 
 
 

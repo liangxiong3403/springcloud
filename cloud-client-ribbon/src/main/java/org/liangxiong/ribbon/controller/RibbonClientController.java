@@ -59,7 +59,7 @@ public class RibbonClientController {
      * @return
      */
     @PostMapping("/remote/users")
-    public Object getRemoteUser(@RequestBody JSONObject params) {
+    public Object addRemoteUser(@RequestBody JSONObject params) {
         //StringBuffer url = new StringBuffer();
         // 方式一
         ///url.append("http://").append(remoteServiceProviderHost).append(":").append(remoteServiceProviderPort).append("/users");
@@ -67,13 +67,15 @@ public class RibbonClientController {
         /// url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
         // 方式三,通过hystrix调用
         try {
+            // 解决调用报错
             this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client", remoteServiceProviderApplicationName, restTemplate);
             // 设置参数
             diyHystrixCommand.setParams(params);
             // 自定义hystrix的command实现
             return diyHystrixCommand.execute();
         } catch (Exception e) {
-            log.error("remote call failure!");
+            e.printStackTrace();
+            log.error("remote call failure: {}", e.getMessage());
         }
         return null;
     }

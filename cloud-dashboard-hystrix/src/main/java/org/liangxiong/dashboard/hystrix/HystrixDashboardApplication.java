@@ -2,6 +2,7 @@ package org.liangxiong.dashboard.hystrix;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.hystrix.dashboard.EnableHystrixDashboard;
 
 /**
  * @author liangxiong
@@ -9,6 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @Time:9:42
  * @Description Hystrix Dashboard
  */
+@EnableHystrixDashboard
 @SpringBootApplication
 public class HystrixDashboardApplication {
 
