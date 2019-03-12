@@ -3,6 +3,7 @@ package org.liangxiong.ribbon.controller;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.liangxiong.cloud.api.domain.User;
+import org.liangxiong.ribbon.component.DiyHystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
@@ -12,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -50,6 +50,8 @@ public class RibbonClientController {
     @Autowired
     private LoadBalancerClient loadBalancerClient;
 
+    private DiyHystrixCommand diyHystrixCommand;
+
     /**
      * 添加用户
      *
@@ -58,12 +60,22 @@ public class RibbonClientController {
      */
     @PostMapping("/remote/users")
     public Object getRemoteUser(@RequestBody JSONObject params) {
-        StringBuffer url = new StringBuffer();
+        //StringBuffer url = new StringBuffer();
         // 方式一
         ///url.append("http://").append(remoteServiceProviderHost).append(":").append(remoteServiceProviderPort).append("/users");
         // 方式二
-        url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
-        return restTemplate.postForObject(url.toString(), params, HashMap.class);
+        /// url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
+        // 方式三,通过hystrix调用
+        try {
+            this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client", remoteServiceProviderApplicationName, restTemplate);
+            // 设置参数
+            diyHystrixCommand.setParams(params);
+            // 自定义hystrix的command实现
+            return diyHystrixCommand.execute();
+        } catch (Exception e) {
+            log.error("remote call failure!");
+        }
+        return null;
     }
 
     /**

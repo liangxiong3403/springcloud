@@ -1,0 +1,11 @@
+server:
+    port: 8091
+    error:
+        path: /diyErrorPath
+management:
+    port: 9012
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-hystrix-dashboard

@@ -333,3 +333,10 @@ org.liangxiong.springcloud.config.CustomPropertySourceLocator
 - cloud-client-ribbon
 - cloud-server-user(服务提供方)
 - cloud-api-user
+
+## 短路器
+
+- cloud-client-ribbon
+- cloud-server-user(服务提供方)
+- cloud-api-user
+- cloud-dashboard-hystrix

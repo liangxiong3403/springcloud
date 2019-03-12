@@ -37,3 +37,4 @@ hs_err_pid*
 /cloud-client-ribbon/target/
 /cloud-server-user/target/
 /cloud-config-introduction/target/
+/cloud-dashboard-hystrix/target/

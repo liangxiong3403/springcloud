@@ -23,7 +23,10 @@ remote:
 # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
 spring-cloud-user-server:
     ribbon:
-        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
+        # 集群服务列表
+        #listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
+        # 单个服务
+        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
         # 通过配置方式引入自定义IPing实现类
         NFLoadBalancerPingClassName: org.liangxiong.ribbon.ping.DiyPingImpl
 # 配置eureka服务端信息

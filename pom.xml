@@ -16,6 +16,7 @@
         <module>cloud-client-ribbon</module>
         <module>cloud-server-user</module>
         <module>cloud-api-user</module>
+        <module>cloud-dashboard-hystrix</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -30,8 +31,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <spring-cloud.version>Edgware.SR5</spring-cloud.version>
     </properties>
 
@@ -83,62 +85,67 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-config-introduction</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-config-server-git</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-config-client-git</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-client-eureka</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-server-eureka</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-config-server-as-client-for-eureka</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-client-consul</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-client-eureka-high-available</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-server-eureka-high-available</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-client-ribbon</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-server-user</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-api-user</artifactId>
-                <version>0.0.1-SNAPSHOT</version>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-dashboard-hystrix</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
