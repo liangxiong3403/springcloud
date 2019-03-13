@@ -7,8 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Random;
+import java.util.Map;
 
 /**
  * @author liangxiong
@@ -26,15 +25,13 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
 
     private final RestTemplate restTemplate;
 
-    private static Random random = new Random();
-
     /**
      * 前端参数
      */
     private JSONObject params;
 
     public DiyHystrixCommand(String groupName, String remoteServiceProviderApplicationName, RestTemplate restTemplate) {
-        super(HystrixCommandGroupKey.Factory.asKey(groupName), 20);
+        super(HystrixCommandGroupKey.Factory.asKey(groupName), 30);
         this.remoteServiceProviderApplicationName = remoteServiceProviderApplicationName;
         this.restTemplate = restTemplate;
     }
@@ -51,9 +48,13 @@ public class DiyHystrixCommand extends HystrixCommand<Object> {
      */
     @Override
     public Object run() throws Exception {
+        long startTime = System.currentTimeMillis();
         StringBuffer url = new StringBuffer();
         url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
-        return restTemplate.postForObject(url.toString(), params, HashMap.class);
+        Map<String, Object> result = restTemplate.postForObject(url.toString(), params, Map.class);
+        long endTime = System.currentTimeMillis();
+        log.info("time interval: {}", endTime - startTime);
+        return result;
     }
 
     /**

@@ -49,6 +49,11 @@ public class UserController {
         result.put("userId", user.getUserId());
         // 区分服务端
         result.put("serverPort", port);
+        try {
+            TimeUnit.MILLISECONDS.sleep(random.nextInt(50));
+        } catch (InterruptedException e) {
+            log.error("thread interruption: {}", e.getMessage());
+        }
         return userService.addUser(user) ? result : new HashMap<Integer, Object>(8);
     }
 
@@ -59,11 +64,17 @@ public class UserController {
      *
      * @return
      */
-//    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")})
+    @HystrixCommand(fallbackMethod = "listAllUserFallback", commandProperties = {@HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")})
     @GetMapping
     public List<User> listAllUser() {
         // 模拟超时
-        timeout();
+        try {
+            int second = random.nextInt(5);
+            log.info("server execution seconds: {}", second);
+            TimeUnit.SECONDS.sleep(second);
+        } catch (InterruptedException e) {
+            log.error("thread interruption: {}", e.getMessage());
+        }
         return userService.listAllUsers();
     }
 
@@ -73,19 +84,8 @@ public class UserController {
      * @return
      */
     private List<User> listAllUserFallback() {
+        log.error("server execution timeout!");
         return Collections.emptyList();
     }
 
-    /**
-     * 模拟超时
-     */
-    private void timeout() {
-        try {
-            int second = random.nextInt(5);
-            log.info("server execution time: {}", second);
-            TimeUnit.SECONDS.sleep(second);
-        } catch (InterruptedException e) {
-            log.error("thread interruption: {}", e.getMessage());
-        }
-    }
 }

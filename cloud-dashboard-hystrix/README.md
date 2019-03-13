@@ -467,11 +467,3 @@ spring:
 ## dashboard访问页面
 
 > `http://localhost:8091/hystrix `输入`http://localhost:9010/hystrix.stream`
-
-```java
-
-```
-
-
-
-
