@@ -346,7 +346,7 @@ com.netflix.hystrix.exception.HystrixRuntimeException: DiyHystrixCommand command
 Caused by: java.lang.IllegalStateException: This instance can only be executed once. Please instantiate a new instance.
 ```
 
-- 原因是没有将remoteServiceProviderApplicationName进行正确解析
+- 原因是:每个请求对应一个`新的`DiyHystrixCommand实例
 - 解决报错
 
 ```java
