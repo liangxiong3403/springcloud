@@ -7,6 +7,16 @@ management:
 spring:
     application:
         name: spring-cloud-ribbon-client
+    cloud:
+        circuit:
+            breaker:
+                # 控制@EnableCircuitBreaker的开关方式一
+                enabled: true
+# 控制@EnableCircuitBreaker方式二
+hystrix:
+    stream:
+        endpoint:
+            enabled: true
 # 服务提供方配置信息
 remote:
     service:
