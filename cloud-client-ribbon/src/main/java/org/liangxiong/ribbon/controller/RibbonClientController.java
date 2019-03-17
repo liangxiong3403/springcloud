@@ -74,7 +74,6 @@ public class RibbonClientController {
             // 自定义hystrix的command实现
             return diyHystrixCommand.execute();
         } catch (Exception e) {
-            e.printStackTrace();
             log.error("remote call failure: {}", e.getMessage());
         }
         return null;
