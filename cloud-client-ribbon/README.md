@@ -773,6 +773,8 @@ eureka:
 ## 项目`cloud-api-user`声明Feign客户端接口
 
 ```java
+package org.liangxiong.cloud.api.service;
+
 /**
  * @author liangxiong
  * @Date:2019-03-10
@@ -798,6 +800,15 @@ public interface IUserService {
      */
     @GetMapping("/users")
     List<User> listAllUsers();
+
+    /**
+     * 通过id获取指定用户
+     *
+     * @param userId
+     * @return
+     */
+    @GetMapping("/users/{userId}")
+    User getUserById(Integer userId);
 }
 ```
 
@@ -901,7 +912,9 @@ public class UserProviderFeignController implements IUserService {
 }
 ```
 
-- 访问`http://localhost:8090/diy/feign/users`测试本地接口是否正常
+- 访问`localhost:8090/feign/users`测试本地接口是否正常
+
+  > 路径组成: Controller中路径+  @Override方法接口中包含的路径`/feign/users`
 
 ## 客户端`cloud-client-ribbon`调用远程服务
 
@@ -921,7 +934,7 @@ package org.liangxiong.ribbon.controller.feign;
 public class FeignClientController implements IUserService {
 
     /**
-     * 为报错是因为@FeignClient mark the feign proxy as a primary bean
+     * 未报错是因为@FeignClient mark the feign proxy as a primary bean
      */
     @Autowired
     private IUserService userService;
@@ -944,8 +957,173 @@ public class FeignClientController implements IUserService {
     public List<User> listAllUsers() {
         return userService.listAllUsers();
     }
+
+    /**
+     * 通过id获取指定用户
+     *
+     * @param userId
+     * @return
+     */
+    @Override
+    public User getUserById(@PathVariable Integer userId) {
+        return userService.getUserById(userId);
+    }
 }
 ```
 
-- 访问`http://localhost:8089/diy/feign/client/users`测试远程接口是否正常
-- 
+- 访问`http://localhost:8089/feign/users`测试远程接口是否正常
+
+  > 路径组成: Controller中路径+  @Override方法接口中包含的路径`/feign/users
+
+- 客户端请求报错
+
+  ```tex
+  "timestamp":1552914058014,"status":405,"error":"Method Not Allowed","exception":"org.springframework.web.HttpRequestMethodNotSupportedException","message":"Request method 'POST' not supported","path":"/feign/users/id"}
+  ```
+
+- 解决客户端报错(修改接口参数声明方式)
+
+  ```java
+  /**
+   * 通过id获取指定用户(@RequestParam解决客户端请求报错)
+   *
+   * @param userId
+   * @return
+   */
+  @GetMapping("/feign/users/id")
+  User getUserById(@RequestParam("userId") Integer userId);
+  ```
+
+## 项目集成hystrix
+
+- 创建回调类
+
+  ```java
+  package org.liangxiong.cloud.api.fallback;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-18
+   * @Time:21:51
+   * @Description 回调实现类, 用于feign的断路器配置
+   */
+  public class UserServiceFallback implements IUserService {
+  
+      @Override
+      public boolean addUser(User user) {
+          return false;
+      }
+  
+      @Override
+      public List<User> listAllUsers() {
+          return Collections.EMPTY_LIST;
+      }
+  
+      @Override
+      public User getUserById(Integer userId) {
+          return null;
+      }
+  }
+  ```
+
+- 配置回调类
+
+  ```java
+  package org.liangxiong.cloud.api.service;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-10
+   * @Time:9:57
+   * @Description 用户操作业务层
+   */
+  @FeignClient(value = "${provider.user.service.name}", fallback = UserServiceFallback.class)
+  public interface IUserService {
+  
+      /**
+       * 添加用户,feign指定请求路径
+       *
+       * @param user
+       * @return
+       */
+      @PostMapping("/feign/users")
+      boolean addUser(User user);
+  
+      /**
+       * 获取所有地用户
+       *
+       * @return
+       */
+      @GetMapping("/feign/users")
+      List<User> listAllUsers();
+  
+      /**
+       * 通过id获取指定用户(@RequestParam解决客户端请求报错)
+       *
+       * @param userId
+       * @return
+       */
+      @GetMapping("/feign/users/id")
+      User getUserById(@RequestParam("userId") Integer userId);
+  }
+  ```
+
+- 配置服务端服务熔断条件
+
+  ```java
+  package org.liangxiong.server.provider.controller;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-18
+   * @Time:16:04
+   * @Description 用户服务提供方(Feign方式)
+   */
+  @RestController
+  public class UserProviderFeignController implements IUserService {
+  
+      @Autowired
+      @Qualifier("inMemoryUserServiceImpl")
+      private IUserService userService;
+  
+      /**
+       * @param user 输入参数;path对应服务端POST:/users
+       * @return
+       */
+      @Override
+      public boolean addUser(@RequestBody User user) {
+          return userService.addUser(user);
+      }
+  
+      /**
+       * path对应服务端GET:/users
+       *
+       * @return 所有用户列表
+       */
+      @Override
+      public List<User> listAllUsers() {
+          return userService.listAllUsers();
+      }
+  
+      /**
+       * 通过id获取指定用户
+       *
+       * @param userId
+       * @return
+       */
+      @HystrixCommand(commandProperties = @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "300"))
+      @Override
+      public User getUserById(Integer userId) {
+          try {
+              int time = RANDOM.nextInt(500);
+              log.info("sleep time: {}", time);
+              TimeUnit.MILLISECONDS.sleep(time);
+          } catch (InterruptedException e) {
+              log.error("method execution interrupt!");
+          }
+          return userService.getUserById(userId);
+      }
+  }
+  ```
+
+  

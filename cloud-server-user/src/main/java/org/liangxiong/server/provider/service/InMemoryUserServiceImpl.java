@@ -21,12 +21,17 @@ public class InMemoryUserServiceImpl implements IUserService {
     private Map<Integer, User> repository = new ConcurrentHashMap<>(8);
 
     @Override
-    public Boolean addUser(User user) {
+    public boolean addUser(User user) {
         return repository.put(user.getUserId(), user) == null;
     }
 
     @Override
     public List<User> listAllUsers() {
         return new ArrayList<>(repository.values());
+    }
+
+    @Override
+    public User getUserById(Integer userId) {
+        return repository.get(userId);
     }
 }
