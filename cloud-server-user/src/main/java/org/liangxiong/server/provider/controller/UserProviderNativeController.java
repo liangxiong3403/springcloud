@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.cloud.api.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +26,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @RequestMapping("/users")
 @RestController
-public class UserController {
+public class UserProviderNativeController {
 
     @Value("${server.port}")
     private Integer port;
 
     @Autowired
+    @Qualifier("inMemoryUserServiceImpl")
     private IUserService userService;
 
     private static Random random = new Random();

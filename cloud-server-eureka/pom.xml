@@ -9,12 +9,6 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>cloud-server-eureka</artifactId>
     <name>cloud-server-eureka</name>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
     <dependencies>
         <!-- eureka server相关依赖 -->
         <dependency>
@@ -22,8 +16,4 @@
             <artifactId>spring-cloud-starter-netflix-eureka-server</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <finalName>${project.name}</finalName>
-    </build>
 </project>

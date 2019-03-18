@@ -591,18 +591,6 @@ public List<User> listAllUsers() {
 ## 自定义bean实现IRule
 
 ```JAVA
-package org.liangxiong.ribbon.rule;
-
-import com.netflix.client.config.IClientConfig;
-import com.netflix.loadbalancer.AbstractLoadBalancerRule;
-import com.netflix.loadbalancer.ILoadBalancer;
-import com.netflix.loadbalancer.Server;
-import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
-
-import java.util.List;
-import java.util.Random;
-
 /**
  * @author liangxiong
  * @Date:2019-03-11
@@ -702,18 +690,6 @@ eureka:
 ## 自定义bean实现IPing
 
 ```java
-package org.liangxiong.ribbon.ping;
-
-import com.netflix.loadbalancer.IPing;
-import com.netflix.loadbalancer.Server;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
-
 /**
  * @author liangxiong
  * @Date:2019-03-11
@@ -783,5 +759,193 @@ eureka:
         enabled: false
 ```
 
+# 集成Feign
 
+## 项目`cloud-api-user`添加依赖
 
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+## 项目`cloud-api-user`声明Feign客户端接口
+
+```java
+/**
+ * @author liangxiong
+ * @Date:2019-03-10
+ * @Time:9:57
+ * @Description 用户操作业务层
+ */
+@FeignClient("${provider.user.service.name}")
+public interface IUserService {
+
+    /**
+     * 添加用户,feign指定请求路径
+     *
+     * @param user
+     * @return
+     */
+    @PostMapping("/users")
+    boolean addUser(User user);
+
+    /**
+     * 获取所有地用户,feign指定请求路径
+     *
+     * @return
+     */
+    @GetMapping("/users")
+    List<User> listAllUsers();
+}
+```
+
+## 项目`cloud-client-ribbon`激活Feign客户端组件扫描
+
+```java
+/**
+ * @author liangxiong
+ * @Date:2019-03-09
+ * @Time:9:50
+ * @Description 客户端负载均衡,@RibbonClient激活ribbon客户端,Edgware版本开始,@EnableEurekaClient或@EnableDiscoveryClient是非必需地
+ */
+@EnableFeignClients(clients = IUserService.class)
+@EnableCircuitBreaker
+@EnableDiscoveryClient
+@RibbonClients(@RibbonClient(name = "spring-cloud-ribbon-client"))
+@SpringBootApplication
+public class RibbonClientApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RibbonClientApplication.class, args);
+    }
+}
+```
+
+## 客户端`cloud-client-ribbon`指定占位符名称
+
+```yaml
+# 指定cloud-api-user项目中@FeignClient("${provider.user.service.name}")
+provider:
+    user:
+        service:
+            name: ${remote.service.provider.application.name}
+```
+
+## 服务端`cloud-server-user`提供服务
+
+```java
+/**
+ * @author liangxiong
+ * @Date:2019-03-10
+ * @Time:10:02
+ * @Description 内存中地实现, 没有访问持久层;集成Feign时,指定bean名称
+ */
+@Service("inMemoryUserServiceImpl")
+public class InMemoryUserServiceImpl implements IUserService {
+
+    private Map<Integer, User> repository = new ConcurrentHashMap<>(8);
+
+    @Override
+    public boolean addUser(User user) {
+        return repository.put(user.getUserId(), user) == null;
+    }
+
+    @Override
+    public List<User> listAllUsers() {
+        return new ArrayList<>(repository.values());
+    }
+}
+```
+
+## 服务端`cloud-server-user`控制器
+
+- 服务端控制器
+
+```java
+package org.liangxiong.server.provider.controller;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-18
+ * @Time:16:04
+ * @Description 用户服务提供方(Feign方式)
+ */
+@RequestMapping("/diy/feign/server")
+@RestController
+public class UserProviderFeignController implements IUserService {
+
+    @Autowired
+    @Qualifier("inMemoryUserServiceImpl")
+    private IUserService userService;
+
+    /**
+     * @param user 输入参数;path对应服务端POST:/users
+     * @return
+     */
+    @Override
+    public boolean addUser(@RequestBody User user) {
+        return userService.addUser(user);
+    }
+
+    /**
+     * path对应服务端GET:/users
+     *
+     * @return 所有用户列表
+     */
+    @Override
+    public List<User> listAllUsers() {
+        return userService.listAllUsers();
+    }
+}
+```
+
+- 访问`http://localhost:8090/diy/feign/users`测试本地接口是否正常
+
+## 客户端`cloud-client-ribbon`调用远程服务
+
+- 客户端控制器
+
+```java
+package org.liangxiong.ribbon.controller.feign;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-18
+ * @Time:15:48
+ * @Description Feign的方式调用远程服务;注意:官方不推荐客户端和服务端同时实现feign客户端接口(比如IUserService)
+ */
+@RequestMapping("/diy/feign/client")
+@RestController
+public class FeignClientController implements IUserService {
+
+    /**
+     * 为报错是因为@FeignClient mark the feign proxy as a primary bean
+     */
+    @Autowired
+    private IUserService userService;
+
+    /**
+     * @param user 输入参数;path对应服务端POST:/users
+     * @return
+     */
+    @Override
+    public boolean addUser(@RequestBody User user) {
+        return userService.addUser(user);
+    }
+
+    /**
+     * path对应服务端GET:/users
+     *
+     * @return 所有用户列表
+     */
+    @Override
+    public List<User> listAllUsers() {
+        return userService.listAllUsers();
+    }
+}
+```
+
+- 访问`http://localhost:8089/diy/feign/client/users`测试远程接口是否正常
+- 
