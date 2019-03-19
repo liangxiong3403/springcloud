@@ -3,6 +3,7 @@ package org.liangxiong.ribbon.controller.feign;
 import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.cloud.api.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,7 +50,7 @@ public class FeignClientController implements IUserService {
      * @return
      */
     @Override
-    public User getUserById(Integer userId) {
+    public User getUserById(@PathVariable("userId") Integer userId) {
         return userService.getUserById(userId);
     }
 }

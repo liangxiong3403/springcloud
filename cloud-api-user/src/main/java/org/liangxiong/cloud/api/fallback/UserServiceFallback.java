@@ -2,7 +2,6 @@ package org.liangxiong.cloud.api.fallback;
 
 import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.cloud.api.service.IUserService;
-import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.List;
  * @Time:21:51
  * @Description {@link IUserService}回调实现类, 用于feign的断路器配置
  */
-@Component
 public class UserServiceFallback implements IUserService {
 
     @Override
@@ -28,6 +26,7 @@ public class UserServiceFallback implements IUserService {
 
     @Override
     public User getUserById(Integer userId) {
-        return null;
+        User user = new User(999, "undefined", 0);
+        return user;
     }
 }

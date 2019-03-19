@@ -7,6 +7,7 @@ import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.cloud.api.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,7 +58,7 @@ public class UserProviderFeignController implements IUserService {
      */
     @HystrixCommand(commandProperties = @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "300"))
     @Override
-    public User getUserById(Integer userId) {
+    public User getUserById(@PathVariable("userId") Integer userId) {
         try {
             int time = RANDOM.nextInt(500);
             log.info("sleep time: {}", time);

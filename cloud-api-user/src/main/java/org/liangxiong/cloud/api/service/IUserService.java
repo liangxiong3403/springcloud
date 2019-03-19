@@ -4,8 +4,8 @@ import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.cloud.api.fallback.UserServiceFallback;
 import org.springframework.cloud.netflix.feign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -38,9 +38,9 @@ public interface IUserService {
     /**
      * 通过id获取指定用户(@RequestParam解决客户端请求报错)
      *
-     * @param userId
+     * @param userId 用户id
      * @return
      */
-    @GetMapping("/feign/users/id")
-    User getUserById(@RequestParam("userId") Integer userId);
+    @GetMapping("/feign/users/{userId}")
+    User getUserById(@PathVariable("userId") Integer userId);
 }

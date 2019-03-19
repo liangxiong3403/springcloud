@@ -929,7 +929,6 @@ package org.liangxiong.ribbon.controller.feign;
  * @Time:15:48
  * @Description Feign的方式调用远程服务;注意:官方不推荐客户端和服务端同时实现feign客户端接口(比如IUserService)
  */
-@RequestMapping("/diy/feign/client")
 @RestController
 public class FeignClientController implements IUserService {
 
@@ -965,7 +964,7 @@ public class FeignClientController implements IUserService {
      * @return
      */
     @Override
-    public User getUserById(@PathVariable Integer userId) {
+    public User getUserById(@PathVariable("userId") Integer userId) {
         return userService.getUserById(userId);
     }
 }
@@ -990,8 +989,8 @@ public class FeignClientController implements IUserService {
    * @param userId
    * @return
    */
-  @GetMapping("/feign/users/id")
-  User getUserById(@RequestParam("userId") Integer userId);
+  @GetMapping("/feign/users/{userId}")
+  User getUserById(@PathVariable("userId") Integer userId);
   ```
 
 ## 项目集成hystrix
@@ -1060,11 +1059,11 @@ public class FeignClientController implements IUserService {
       /**
        * 通过id获取指定用户(@RequestParam解决客户端请求报错)
        *
-       * @param userId
+       * @param userId 用户id
        * @return
        */
-      @GetMapping("/feign/users/id")
-      User getUserById(@RequestParam("userId") Integer userId);
+      @GetMapping("/feign/users/{userId}")
+      User getUserById(@PathVariable("userId") Integer userId);
   }
   ```
 
@@ -1113,7 +1112,7 @@ public class FeignClientController implements IUserService {
        */
       @HystrixCommand(commandProperties = @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "300"))
       @Override
-      public User getUserById(Integer userId) {
+      public User getUserById(@PathVariable("userId") Integer userId) {
           try {
               int time = RANDOM.nextInt(500);
               log.info("sleep time: {}", time);
@@ -1126,4 +1125,80 @@ public class FeignClientController implements IUserService {
   }
   ```
 
+- 配置客户端`cloud-client-ribbon`,支持hystrix
+
+  ```yaml
+  # 开启feign对hystrix的支持
+  feign:
+      hystrix:
+          enabled: true
+  ```
+
+- 客户端`cloud-client-ribbon`报错
+
+  ```tex
+  Caused by: java.lang.IllegalStateException: No fallback instance of type class org.liangxiong.cloud.api.fallback.UserServiceFallback found for feign client spring-cloud-user-server
+  ```
+
+- 解决客户端`cloud-client-ribbon`报错
+
+  ```java
+  package org.liangxiong.ribbon.config;
   
+  /**
+   * @author liangxiong
+   * @Date:2019-03-09
+   * @Time:13:55
+   * @Description 配置类
+   */
+  @Configuration
+  public class WebConfiguration {
+  
+      /**
+       * 实现RestTemplate实例的负载均衡
+       *
+       * @return
+       */
+      @Bean
+      @LoadBalanced
+      public RestTemplate restTemplate() {
+          return new RestTemplate();
+      }
+  
+      /**
+       * 解决feign中开启hystrix的报错
+       *
+       * @return
+       */
+      @Bean
+      public UserServiceFallback userServiceFallback() {
+          return new UserServiceFallback();
+      }
+  }
+  ```
+
+- 访问客户端地址(客户端内部远程调用),测试断路器是否正常
+
+  > `http://localhost:8089/feign/users/2`
+
+  - 正常情况
+
+    ```json
+    {
+        userId: 2,
+        username: "薛宝钗",
+        age: 16
+    }
+    ```
+
+  - 异常情况
+
+    ```json
+    {
+        userId: 999,
+        username: "undefined",
+        age: 0
+    }
+    ```
+
+    

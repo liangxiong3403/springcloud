@@ -52,3 +52,7 @@ provider:
     user:
         service:
             name: ${remote.service.provider.application.name}
+# 开启feign对hystrix的支持
+feign:
+    hystrix:
+        enabled: true
