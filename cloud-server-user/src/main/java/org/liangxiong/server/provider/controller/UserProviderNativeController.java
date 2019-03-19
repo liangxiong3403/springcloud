@@ -71,9 +71,9 @@ public class UserProviderNativeController {
     public List<User> listAllUser() {
         // 模拟超时
         try {
-            int second = random.nextInt(5);
-            log.info("server execution seconds: {}", second);
-            TimeUnit.SECONDS.sleep(second);
+            int milliseconds = random.nextInt(500);
+            log.info("server execution milliseconds: {}", milliseconds);
+            TimeUnit.MILLISECONDS.sleep(milliseconds);
         } catch (InterruptedException e) {
             log.error("thread interruption: {}", e.getMessage());
         }

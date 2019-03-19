@@ -759,7 +759,7 @@ eureka:
         enabled: false
 ```
 
-# 集成Feign
+# Feign集成注册中心/配置中心/断路器
 
 ## 项目`cloud-api-user`添加依赖
 
@@ -1312,7 +1312,7 @@ public class FeignClientController implements IUserService {
               defaultZone: http://localhost:8083/eureka
   ```
 
-- 客户端`cloud-client-ribbon`的配置文件使用配置文件的配置
+- 客户端`cloud-client-ribbon`的配置文件application.yml使用配置文件的配置
 
   ```yaml
   #当集成配置中心时,"remote.service.provider.application.name"这个配置可以从配置中心获取
@@ -1322,4 +1322,252 @@ public class FeignClientController implements IUserService {
               name: ${remote.service.provider.application.name}
   ```
 
-  
+# 配置客户端`cloud-client-ribbon`超时时间动态配置
+
+## 修改配置文件application.yml
+
+```yaml
+# 定义接口超时时间,动态调整
+method:
+    execution:
+        timeout: 30
+```
+
+## 修改实现类
+
+```java
+package org.liangxiong.ribbon.component;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-12
+ * @Time:15:22
+ * @Description
+ */
+@Slf4j
+public class DiyHystrixCommand extends HystrixCommand<Object> {
+
+    /**
+     * 远程服务提供方名称
+     */
+    private final String remoteServiceProviderApplicationName;
+
+    private final RestTemplate restTemplate;
+
+    /**
+     * 前端参数
+     */
+    private JSONObject params;
+
+    public DiyHystrixCommand(String groupKey, String commandKey, String remoteServiceProviderApplicationName, RestTemplate restTemplate, Integer timeout) {
+       // 保证每次请求的commandKey不同,就可以动态调整timeout参数值
+        super(Setter.withGroupKey(HystrixCommandGroupKey.Factory.asKey(groupKey)).andCommandKey(HystrixCommandKey.Factory.asKey(commandKey + timeout)).andCommandPropertiesDefaults(HystrixCommandProperties.Setter().withExecutionTimeoutInMilliseconds(timeout)));
+        this.remoteServiceProviderApplicationName = remoteServiceProviderApplicationName;
+        this.restTemplate = restTemplate;
+    }
+
+    public void setParams(JSONObject params) {
+        this.params = params;
+    }
+
+    /**
+     * 替代@EnableHystrix的注解实现
+     *
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public Object run() throws Exception {
+        long startTime = System.currentTimeMillis();
+        StringBuffer url = new StringBuffer();
+        url.append("http://").append(remoteServiceProviderApplicationName).append("/users");
+        Map<String, Object> result = restTemplate.postForObject(url.toString(), params, Map.class);
+        long endTime = System.currentTimeMillis();
+        log.info("time interval: {}", endTime - startTime);
+        return result;
+    }
+
+    /**
+     * 回调方法用于熔断恢复
+     */
+    @Override
+    public Object getFallback() {
+        log.error("client execution timeout!");
+        return Collections.emptyMap();
+    }
+}
+```
+
+## 客户端控制器配置(需要使用@RefreshScope注解)
+
+```java
+package org.liangxiong.ribbon.controller;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-09
+ * @Time:11:30
+ * @Description ribbon作为客户端Controller
+ */
+@Slf4j
+@RefreshScope
+@RequestMapping("/ribbon")
+@RestController
+public class RibbonClientController {
+
+    /**
+     * 远程服务提供方主机
+     */
+    @Value("${remote.service.provider.host}")
+    private String remoteServiceProviderHost;
+
+    /**
+     * 远程服务提供方端口
+     */
+    @Value("${remote.service.provider.port}")
+    private String remoteServiceProviderPort;
+
+    /**
+     * 远程服务提供方名称
+     */
+    @Value("${remote.service.provider.application.name}")
+    private String remoteServiceProviderApplicationName;
+
+    /**
+     * 获取配置文件超时时间(通过POST http://localhost:9010/env?method.execution.timeout=40设置,同时调用refresh)
+     */
+    @Value("${method.execution.timeout}")
+    private Integer timeout;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
+    private LoadBalancerClient loadBalancerClient;
+
+    private DiyHystrixCommand diyHystrixCommand;
+
+    /**
+     * 添加用户
+     *
+     * @param params
+     * @return
+     */
+    @PostMapping("/remote/users")
+    public Object addRemoteUser(@RequestBody JSONObject params) {
+        // 方式三,通过hystrix调用
+        try {
+            // 解决调用报错
+            this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client-group-key", "spring-cloud-ribbon-client-command-key", remoteServiceProviderApplicationName, restTemplate, timeout);
+            // 设置参数
+            diyHystrixCommand.setParams(params);
+            // 自定义hystrix的command实现
+            return diyHystrixCommand.execute();
+        } catch (Exception e) {
+            log.error("remote call failure: {}", e.getMessage());
+        }
+        return null;
+    }
+
+}
+```
+
+## 测试步骤
+
+- 默认超时时间为配置文件设置的30毫秒
+- 通过POST方法`http://localhost:9010/env?method.execution.timeout=40`修改超时时间
+- 调用POST方法`http://localhost:9010/refresh`刷新应用上下文配置(保证控制器的timeout参数改变)
+- 调用POST方法`http://localhost:8089/ribbon/remote/users`提交JSON数据,测试超时时间阈值是否为40毫秒(查看系统日志)
+
+## 源码分析为什么由`commandKey`决定超时参数
+
+- 第一段代码`com.netflix.hystrix.AbstractCommand#AbstractCommand`
+
+```java
+this.commandGroup = initGroupKey(group);
+this.commandKey = initCommandKey(key, getClass());
+this.properties = initCommandProperties(this.commandKey, propertiesStrategy, commandPropertiesDefaults);
+this.threadPoolKey = initThreadPoolKey(threadPoolKey, this.commandGroup, this.properties.executionIsolationThreadPoolKeyOverride().get());
+this.metrics = initMetrics(metrics, this.commandGroup, this.threadPoolKey, this.commandKey, this.properties);
+this.circuitBreaker = initCircuitBreaker(this.properties.circuitBreakerEnabled().get(), circuitBreaker, this.commandGroup, this.commandKey, this.properties, this.metrics);
+this.threadPool = initThreadPool(threadPool, this.threadPoolKey, threadPoolPropertiesDefaults);
+
+//Strategies from plugins
+this.eventNotifier = HystrixPlugins.getInstance().getEventNotifier();
+this.concurrencyStrategy = HystrixPlugins.getInstance().getConcurrencyStrategy();
+HystrixMetricsPublisherFactory.createOrRetrievePublisherForCommand(this.commandKey, this.commandGroup, this.metrics, this.circuitBreaker, this.properties);
+this.executionHook = initExecutionHook(executionHook);
+
+this.requestCache = HystrixRequestCache.getInstance(this.commandKey, this.concurrencyStrategy);
+this.currentRequestLog = initRequestLog(this.properties.requestLogEnabled().get(), this.concurrencyStrategy);
+
+/* fallback semaphore override if applicable */
+this.fallbackSemaphoreOverride = fallbackSemaphore;
+
+/* execution semaphore override if applicable */
+this.executionSemaphoreOverride = executionSemaphore;
+```
+
+- 第二段代码`com.netflix.hystrix.AbstractCommand#initCommandKey`
+
+```java
+private static HystrixCommandKey initCommandKey(final HystrixCommandKey fromConstructor, Class<?> clazz) {
+    if (fromConstructor == null || fromConstructor.name().trim().equals("")) {
+        // 根据AbstractCommand的实现类org.liangxiong.ribbon.component.DiyHystrixCommand获取名称,先从缓存获取,获取不到就根据实现类的类目构造名称,然后放入缓存
+        final String keyName = getDefaultNameFromClass(clazz);
+        return HystrixCommandKey.Factory.asKey(keyName);
+    } else {
+        return fromConstructor;
+    }
+}
+```
+
+- 第三段代码`com.netflix.hystrix.AbstractCommand#initCommandProperties`
+
+```java
+private static HystrixCommandProperties initCommandProperties(HystrixCommandKey commandKey, HystrixPropertiesStrategy propertiesStrategy, HystrixCommandProperties.Setter commandPropertiesDefaults) {
+    // 如果属性策略为空
+    if (propertiesStrategy == null) {
+        // 根据commandKey获取配置参数(比如execution.isolation.thread.timeoutInMilliseconds)
+        return HystrixPropertiesFactory.getCommandProperties(commandKey, commandPropertiesDefaults);
+    } else {
+        // used for unit testing
+        return propertiesStrategy.getCommandProperties(commandKey, commandPropertiesDefaults);
+    }
+}
+```
+
+- 第四段代码`com.netflix.hystrix.strategy.properties.HystrixPropertiesFactory#getCommandProperties`
+
+```java
+public static HystrixCommandProperties getCommandProperties(HystrixCommandKey key, HystrixCommandProperties.Setter builder) {
+    HystrixPropertiesStrategy hystrixPropertiesStrategy = HystrixPlugins.getInstance().getPropertiesStrategy();
+    // cacheKey就是commandKey
+    String cacheKey = hystrixPropertiesStrategy.getCommandPropertiesCacheKey(key, builder);
+    if (cacheKey != null) {
+        HystrixCommandProperties properties = commandProperties.get(cacheKey);
+        if (properties != null) {
+            return properties;
+        } else {
+            if (builder == null) {
+                builder = HystrixCommandProperties.Setter();
+            }
+            // create new instance
+            properties = hystrixPropertiesStrategy.getCommandProperties(key, builder);
+            // cache and return
+            HystrixCommandProperties existing = commandProperties.putIfAbsent(cacheKey, properties);
+            if (existing == null) {
+                return properties;
+            } else {
+                return existing;
+            }
+        }
+    } else {
+        // no cacheKey so we generate it with caching
+        return hystrixPropertiesStrategy.getCommandProperties(key, builder);
+    }
+}
+```
+
+- `commandKey`是获取HystrixCommandProperties的关键
+

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,6 +23,7 @@ import java.util.List;
  * @Description ribbon作为客户端Controller
  */
 @Slf4j
+@RefreshScope
 @RequestMapping("/ribbon")
 @RestController
 public class RibbonClientController {
@@ -43,6 +45,12 @@ public class RibbonClientController {
      */
     @Value("${remote.service.provider.application.name}")
     private String remoteServiceProviderApplicationName;
+
+    /**
+     * 获取配置文件超时时间(通过POST http://localhost:9010/env?method.execution.timeout=40设置,同时调用refresh)
+     */
+    @Value("${method.execution.timeout}")
+    private Integer timeout;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -68,7 +76,7 @@ public class RibbonClientController {
         // 方式三,通过hystrix调用
         try {
             // 解决调用报错
-            this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client", remoteServiceProviderApplicationName, restTemplate);
+            this.diyHystrixCommand = new DiyHystrixCommand("spring-cloud-ribbon-client-group-key", "spring-cloud-ribbon-client-command-key", remoteServiceProviderApplicationName, restTemplate, timeout);
             // 设置参数
             diyHystrixCommand.setParams(params);
             // 自定义hystrix的command实现

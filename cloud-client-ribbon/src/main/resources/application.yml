@@ -56,3 +56,7 @@ provider:
 feign:
     hystrix:
         enabled: true
+# 定义接口超时时间,动态调整
+method:
+    execution:
+        timeout: 30
