@@ -340,3 +340,10 @@ org.liangxiong.springcloud.config.CustomPropertySourceLocator
 - cloud-server-user(服务提供方)
 - cloud-api-user
 - cloud-dashboard-hystrix
+
+## 服务调用
+
+- cloud-client-ribbon(客户端包含:负载均衡/断路器/服务调用/服务发现/配置客户端)
+- cloud-server-user(服务提供方)
+- cloud-api-user(集成了feign)
+- cloud-config-server-as-client-for-eureka(配置中心)

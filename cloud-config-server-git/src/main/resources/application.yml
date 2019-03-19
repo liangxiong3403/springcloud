@@ -6,7 +6,7 @@ management:
     port: 9003
 spring:
     application:
-        name: "spring-cloud-config-server"
+        name: spring-cloud-config-server
     cloud:
         config:
             server:

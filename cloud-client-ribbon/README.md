@@ -1201,4 +1201,125 @@ public class FeignClientController implements IUserService {
     }
     ```
 
-    
+## 集成Eureka(使用注册中心提供服务注册和服务发现,取代Ribbon直接连接服务提供方的方式)
+
+- 服务提供方`cloud-server-user`集成Eureka
+
+  ```yaml
+  server:
+      port: 8090
+  management:
+      port: 9011
+      security:
+          enabled: false
+  spring:
+      application:
+          name: spring-cloud-user-server
+  eureka:
+      client:
+          service-url:
+              defaultZone: http://localhost:8083/eureka/
+          registry-fetch-interval-seconds: 15
+  ```
+
+- 客户端`cloud-server-user`集成Eureka
+
+  ```yaml
+  server:
+      port: 8089
+  management:
+      port: 9010
+      security:
+          enabled: false
+  spring:
+      application:
+          name: spring-cloud-ribbon-client
+      cloud:
+          circuit:
+              breaker:
+                  # 控制@EnableCircuitBreaker的开关方式一
+                  enabled: true
+  # 控制@EnableCircuitBreaker方式二
+  hystrix:
+      stream:
+          endpoint:
+              enabled: true
+  # 服务提供方配置信息
+  remote:
+      service:
+          provider:
+              application:
+                  name: spring-cloud-user-server
+              host: localhost
+              port: 8090
+          provider2:
+              application:
+                  name: spring-cloud-user-server
+              host: localhost
+              port: 18090
+  # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+  spring-cloud-user-server:
+      ribbon:
+          # 通过配置方式引入自定义IPing实现类
+          NFLoadBalancerPingClassName: org.liangxiong.ribbon.ping.DiyPingImpl
+  # 配置eureka服务端信息
+  eureka:
+      client:
+          service-url:
+              defaultZone: http://localhost:8083/eureka/
+          registry-fetch-interval-seconds: 15
+          # 引入eureka客户端依赖后,临时关闭eureka客户端功能
+          #enabled: false
+  # 指定cloud-api-user项目中@FeignClient("${provider.user.service.name}")
+  provider:
+      user:
+          service:
+              name: ${remote.service.provider.application.name}
+  # 开启feign对hystrix的支持
+  feign:
+      hystrix:
+          enabled: true
+  ```
+
+## 集成Config Server
+
+- 客户端`cloud-client-ribbon`引入依赖
+
+  ```xml
+  <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-config</artifactId>
+  </dependency>
+  ```
+
+- 客户端`cloud-client-ribbon`配置**配置中心**地址(bootstrap.yaml)
+
+  ```yaml
+  spring:
+      cloud:
+          config:
+              name: user
+              profile: test
+              label: master
+              # 开启对于配置中心的服务发现(通过Eureka找到配置中心服务器)
+              discovery:
+                  enabled: true
+                  service-id: spring-cloud-config-server-as-client-for-eureka
+  eureka:
+      client:
+          # 注册中心地址
+          service-url:
+              defaultZone: http://localhost:8083/eureka
+  ```
+
+- 客户端`cloud-client-ribbon`的配置文件使用配置文件的配置
+
+  ```yaml
+  #当集成配置中心时,"remote.service.provider.application.name"这个配置可以从配置中心获取
+  provider:
+      user:
+          service:
+              name: ${remote.service.provider.application.name}
+  ```
+
+  

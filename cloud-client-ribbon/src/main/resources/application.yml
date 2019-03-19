@@ -36,7 +36,7 @@ spring-cloud-user-server:
         # 集群服务列表
         #listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
         # 单个服务
-        listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+        #listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
         # 通过配置方式引入自定义IPing实现类
         NFLoadBalancerPingClassName: org.liangxiong.ribbon.ping.DiyPingImpl
 # 配置eureka服务端信息
@@ -46,8 +46,8 @@ eureka:
             defaultZone: http://localhost:8083/eureka/
         registry-fetch-interval-seconds: 15
         # 引入eureka客户端依赖后,临时关闭eureka客户端功能
-        enabled: false
-# 指定cloud-api-user项目中@FeignClient("${provider.user.service.name}")
+        #enabled: false
+# 指定cloud-api-user项目中@FeignClient("${provider.user.service.name}");注意：当集成配置中心时,"remote.service.provider.application.name"这个配置可以从配置中心获取
 provider:
     user:
         service:

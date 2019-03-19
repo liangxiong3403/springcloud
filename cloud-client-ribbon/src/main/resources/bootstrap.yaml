@@ -1,0 +1,15 @@
+spring:
+    cloud:
+        config:
+            name: user
+            profile: test
+            label: master
+            # 开启对于配置中心的服务发现(通过Eureka找到配置中心服务器)
+            discovery:
+                enabled: true
+                service-id: spring-cloud-config-server-as-client-for-eureka
+eureka:
+    client:
+        # 注册中心地址
+        service-url:
+            defaultZone: http://localhost:8083/eureka
