@@ -17,6 +17,7 @@
         <module>cloud-server-user</module>
         <module>cloud-api-user</module>
         <module>cloud-dashboard-hystrix</module>
+        <module>cloud-gateway-zuul</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -145,6 +146,11 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-dashboard-hystrix</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-gateway-zuul</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

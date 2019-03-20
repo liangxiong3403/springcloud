@@ -1,0 +1,19 @@
+server:
+    port: 8092
+management:
+    port: 9013
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-zuul-gateway
+zuul:
+    routes:
+        # 代理服务提供方(名称"user-server"可以任意定义)
+        user-server:
+            path: /feign/**
+            serviceId: spring-cloud-user-server
+        # 代理客户端(名称"user-client"可以任意定义)
+        user-client:
+            path: /ribbon/**
+            serviceId: spring-cloud-ribbon-client

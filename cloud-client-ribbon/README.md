@@ -73,7 +73,7 @@
   # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
   spring-cloud-user-service:
       ribbon:
-          listOfServers: rule
+          listOfServers: http://localhost:8090/
   ```
 
 - 配置RestTemplate
@@ -883,7 +883,6 @@ package org.liangxiong.server.provider.controller;
  * @Time:16:04
  * @Description 用户服务提供方(Feign方式)
  */
-@RequestMapping("/diy/feign/server")
 @RestController
 public class UserProviderFeignController implements IUserService {
 
