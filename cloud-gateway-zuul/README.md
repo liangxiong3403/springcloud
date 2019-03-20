@@ -94,15 +94,15 @@ eureka:
             defaultZone: http://localhost:8083/eureka/
 ```
 
-## 通过代理访问
+## 通过代理访问服务端或客户端接口
 
-- 服务端访问
+- 代理服务端访问
 
 > `http://localhost:8092/spring-cloud-user-server/feign/users/`
 >
 > `http://localhost:8092/spring-cloud-user-server/feign/users/1`
 
-- 代理到客户端访问
+- 代理客户端访问
 
 > `http://localhost:8092/spring-cloud-ribbon-client/ribbon/remote/users/`
 >
@@ -110,7 +110,7 @@ eureka:
 
 ## 获取代理的路由列表
 
-> `<http://localhost:9013/routes>`
+> `http://localhost:9013/routes`
 
 **内容如下所示**
 
@@ -123,4 +123,30 @@ eureka:
     "/spring-cloud-config-server-as-client-for-eureka/**" : "spring-cloud-config-server-as-client-for-eureka"
 }
 ```
+
+## 默认客户端
+
+- 默认客户端
+
+  > `org.apache.http.client.HttpClient`
+
+- 默认装配类
+
+  > `org.springframework.cloud.netflix.ribbon.apache.HttpClientRibbonConfiguration`
+
+## 自定义客户端
+
+- 自定义客户端
+
+  > `okhttp3.OkHttpClient`
+
+- 自动装配类
+
+  > `org.springframework.cloud.netflix.ribbon.okhttp.OkHttpRibbonConfiguration`
+
+- 配置项
+
+  > ```
+  > ribbon.okhttp.enabled=true
+  > ```
 
