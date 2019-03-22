@@ -7,6 +7,14 @@ management:
 spring:
     application:
         name: spring-cloud-user-server
+    kafka:
+        # 集群地址
+        bootstrap-servers: 192.168.0.130:9092,192.168.0.131:9092,192.168.0.132:9092
+        producer:
+            acks: 1
+            client-id: lx-spring-cloud-stream-producer1
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: org.liangxiong.server.provider.component.ObjectSerializer
 eureka:
     client:
         service-url:

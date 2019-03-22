@@ -60,7 +60,7 @@
         <appender-ref ref="STDOUT"/>
     </logger>
     <!-- 日志输出级别(全局配置) -->
-    <root level="INFO">
+    <root level="ERROR">
         <!-- 开启控制台输出 -->
         <appender-ref ref="STDOUT"/>
         <!-- 开启日志文件输出 -->

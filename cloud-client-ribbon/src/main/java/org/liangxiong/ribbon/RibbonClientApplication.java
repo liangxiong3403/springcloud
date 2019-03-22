@@ -1,6 +1,7 @@
 package org.liangxiong.ribbon;
 
 import org.liangxiong.cloud.api.service.IUserService;
+import org.liangxiong.ribbon.stream.UserMessageStream;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
@@ -8,6 +9,7 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.netflix.feign.EnableFeignClients;
 import org.springframework.cloud.netflix.ribbon.RibbonClient;
 import org.springframework.cloud.netflix.ribbon.RibbonClients;
+import org.springframework.cloud.stream.annotation.EnableBinding;
 
 /**
  * @author liangxiong
@@ -16,6 +18,7 @@ import org.springframework.cloud.netflix.ribbon.RibbonClients;
  * @Description 客户端负载均衡,@RibbonClient激活ribbon客户端,Edgware版本开始,@EnableEurekaClient或@EnableDiscoveryClient是非必需地
  * IUserService作为feign的客户端接口
  */
+@EnableBinding(UserMessageStream.class)
 @EnableFeignClients(clients = IUserService.class)
 @EnableCircuitBreaker
 @EnableDiscoveryClient
