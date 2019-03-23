@@ -233,7 +233,7 @@
    * @Description 客户端负载均衡,@RibbonClient激活ribbon客户端,Edgware版本开始,@EnableEurekaClient或@EnableDiscoveryClient是非必需地
    * IUserService作为feign的客户端接口
    */
-  @EnableBinding(Sink.class)
+  @EnableBinding(UserMessageStream.class)
   @SpringBootApplication
   public class RibbonClientApplication {
   
@@ -289,11 +289,144 @@
   }
   ```
 
-## 通过命令行查看消息
+## 消费消息的三种方式(三选一)
+
+- 消费端**第一种**写法
+
+  ```java
+  package org.liangxiong.ribbon.controller;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-22
+   * @Time:13:37
+   * @Description 消息处理
+   */
+  @Slf4j
+  @RequestMapping("/kafka")
+  @RestController
+  public class MessageController {
+  
+      @Autowired
+      private UserMessageStream userMessageStream;
+  
+      private User user;
+  
+      /**
+       * 获取消息
+       *
+       * @return
+       */
+      @GetMapping("/message/object")
+      public User returnMessage() {
+          return user;
+      }
+  
+      /**
+       * 监听消息方式一
+       *
+       * @return
+       */
+      @StreamListener(UserMessageStream.INPUT)
+      public void listenerMessage(byte[] data) {
+          user = UserDeserializeUtil.deserializeObject(data);
+          if (log.isInfoEnabled()) {
+              log.info("receive message from StreamListener: {}", user.getUsername());
+          }
+      }
+  
+  }
+  ```
+
+- 消费端**第二种**写法
+
+  ```java
+  package org.liangxiong.ribbon.service;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-23
+   * @Time:18:24
+   * @Description 使用SubscribableChannel的方式接受消息
+   */
+  @Slf4j
+  @Service
+  public class UserMessageStreamService {
+  
+      @Autowired
+      private UserMessageStream userMessageStream;
+  
+      @PostConstruct
+      public void init() {
+          userMessageStream.input().subscribe(message -> {
+              User user = UserDeserializeUtil.deserializeObject((byte[]) message.getPayload());
+              if (log.isInfoEnabled()) {
+                  log.info("receive message from SubscribableChannel: {}", user.getUsername());
+              }
+          });
+      }
+  }
+  ```
+
+- 消费端**第三种**写法
+
+  ```java
+  package org.liangxiong.ribbon.service;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-03-23
+   * @Time:18:24
+   * @Description 使用SubscribableChannel的方式接受消息
+   */
+  @Slf4j
+  @Service
+  public class UserMessageStreamService {
+  
+      @ServiceActivator(inputChannel = UserMessageStream.INPUT)
+      public void receiveMessage(byte[] data) {
+          User user = UserDeserializeUtil.deserializeObject(data);
+          if (log.isInfoEnabled()) {
+              log.info("receive message from ServiceActivator: {}", user.getUsername());
+          }
+      }
+  }
+  ```
+
+## 通过命令行查看消息(调试)
 
 > sh ./bin/kafka-console-consumer.sh --bootstrap-server 192.168.0.131:9092 --topic test --from-beginningworld
 
 # 注意事项
+
+## 主机名称约束
+
+- 如果服务器配置如下
+
+  ```properties
+  127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+  ::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+  192.168.43.2 node1
+  192.168.43.3 node2
+  192.168.43.4 node3
+  192.168.43.5 node4
+  ```
+
+- 开发环境也必须配置hosts(比如配置window或者mac的hosts文件)
+
+  ```tex
+  如果开发环境不配置,则无法调试
+  ```
+
+## Kafka配置leader(集群中`只有一台`服务器需要配置)
+
+- `im kafka/config/server.properties `(`node1`机器配置)
+
+- 修改server.properties
+
+  ```
+  advertised.listeners=PLAINTEXT://node1:9092
+  ```
 
 ## 客户端@StreamListener报错
 
@@ -329,10 +462,45 @@
     by default the Spring Cloud Stream Kafka Binder will expect headers to be present
     ```
 
+  - 官方说明
+
+    ```tex
+    https://github.com/spring-cloud/spring-cloud-stream-binder-kafka/issues/410
+    ```
+
   - 解决报错
 
     ```yaml
-    
+    spring:
+        application:
+            name: spring-cloud-ribbon-client
+        cloud:
+            circuit:
+                breaker:
+                    # 控制@EnableCircuitBreaker的开关方式一
+                    enabled: true
+            stream:
+                kafka:
+                    binder:
+                        # 默认是本机MQ地址
+                        brokers: 192.168.43.2,192.168.43.3,192.168.43.4
+                        # 默认是本机zookeeper地址
+                        zkNodes: 192.168.43.2,192.168.43.3,192.168.43.4
+                # 激活Spring Cloud Stream Binding(激活@StreamListener)
+                bindings:
+                    # 名称user-message来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
+                    user-message:
+                        # 配置topic
+                        destination: test
+                        # 解决客户端消费消息时报错:org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder | Could not convert message:
+                        # you need to specify headerMode: raw with spring-cloud-streaam 1.3.x. It is not needed in 2.0.x.
+                        consumer:
+                            # 解决报错
+                            header-mode: raw
     ```
 
-    
+
+## 如果同时使用三种消息接收方式
+
+> 则会交替接收消息:某一时刻,只有一种方式会收到消息
+

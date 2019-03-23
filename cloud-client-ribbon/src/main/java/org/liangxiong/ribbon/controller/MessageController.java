@@ -3,14 +3,12 @@ package org.liangxiong.ribbon.controller;
 import lombok.extern.slf4j.Slf4j;
 import org.liangxiong.cloud.api.domain.User;
 import org.liangxiong.ribbon.stream.UserMessageStream;
+import org.liangxiong.ribbon.util.UserDeserializeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 
 /**
  * @author liangxiong
@@ -39,33 +37,15 @@ public class MessageController {
     }
 
     /**
-     * 监听消息
+     * 监听消息方式一
      *
      * @return
      */
     @StreamListener(UserMessageStream.INPUT)
     public void listenerMessage(byte[] data) {
-        deserializeObject(data);
-        System.err.println("user: " + user.getUsername());
-        //        userMessageStream.input().subscribe(message -> deserializeObject((byte[]) data.getPayload()));
-    }
-
-    /**
-     * 对字节数组进行反序列化
-     *
-     * @param source
-     */
-    private void deserializeObject(byte[] source) {
-        try {
-            try (ByteArrayInputStream bis = new ByteArrayInputStream(source);
-                 ObjectInputStream ois = new ObjectInputStream(bis)) {
-                Object message = ois.readObject();
-                if (message instanceof User) {
-                    user = (User) message;
-                }
-            }
-        } catch (Exception e) {
-            log.error("Deserialize execution error!");
+        user = UserDeserializeUtil.deserializeObject(data);
+        if (log.isInfoEnabled()) {
+            log.info("receive message from StreamListener: {}", user.getUsername());
         }
     }
 
