@@ -13,6 +13,8 @@ spring:
                 # 控制@EnableCircuitBreaker的开关方式一
                 enabled: true
         stream:
+            # 设置默认binder(kafka和rabbit二选一)
+            default-binder: kafka
             kafka:
                 binder:
                     # 默认是本机MQ地址
@@ -21,7 +23,7 @@ spring:
                     zkNodes: 192.168.43.2,192.168.43.3,192.168.43.4
             # 激活Spring Cloud Stream Binding(激活@StreamListener)
             bindings:
-                # 名称user-message来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
+                # 名称user-message-kafka来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
                 user-message:
                     # 配置topic
                     destination: test

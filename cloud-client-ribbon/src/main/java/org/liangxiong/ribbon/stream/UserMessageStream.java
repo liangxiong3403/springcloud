@@ -7,12 +7,12 @@ import org.springframework.messaging.SubscribableChannel;
  * @author liangxiong
  * @Date:2019-03-22
  * @Time:15:03
- * @Description
+ * @Description 消息接收接口
  */
 public interface UserMessageStream {
 
     /**
-     * 管道名称
+     * 输出管道名称
      */
     String INPUT = "user-message";
 
@@ -23,4 +23,5 @@ public interface UserMessageStream {
      */
     @Input(INPUT)
     SubscribableChannel input();
+
 }

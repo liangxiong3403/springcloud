@@ -215,8 +215,8 @@
                       zkNodes: 192.168.0.130,192.168.0.131,192.168.0.132
               # 激活Spring Cloud Stream Binding(激活@StreamListener)
               bindings:
-                  # 名称user-message来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
-                  user-message:
+                  # 名称user-message-kafka来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
+                  user-message-kafka:
                       # 配置topic
                       destination: test
   ```
@@ -262,7 +262,7 @@
       /**
        * 管道名称
        */
-      String INPUT = "user-message";
+      String INPUT = "user-message-kafka";
   
       /**
        * 接收MQ的消息
@@ -503,4 +503,193 @@
 ## 如果同时使用三种消息接收方式
 
 > 则会交替接收消息:某一时刻,只有一种方式会收到消息
+
+# 集成RabbitMQ
+
+## 项目`cloud-client-ribbon`引入依赖
+
+```xml
+<!-- Stream Rabbit相关依赖 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+</dependency>
+```
+
+## `cloud-server-user`引入依赖
+
+```xml
+<!-- Stream Rabbit相关依赖 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
+</dependency>
+```
+
+## `UserMessageStream`抽取到项目`cloud-api-user`中,形成公共API
+
+- 提取接口
+
+```java
+package org.liangxiong.cloud.api.stream;
+
+import org.springframework.cloud.stream.annotation.Input;
+import org.springframework.cloud.stream.annotation.Output;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.SubscribableChannel;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-22
+ * @Time:15:03
+ * @Description 消息发送接口
+ */
+public interface UserMessageStream {
+
+    /**
+     * 管道名称
+     */
+    String CHANNEL_NAME = "user-message";
+
+    /**
+     * 接收MQ的消息
+     *
+     * @return
+     */
+    @Input(CHANNEL_NAME)
+    SubscribableChannel input();
+
+    /**
+     * 发送MQ消息
+     *
+     * @return
+     */
+    @Output(CHANNEL_NAME)
+    MessageChannel output();
+}
+```
+
+- 项目`cloud-api-user`引入依赖
+
+  ```xml
+  <!-- Spring Cloud Stream相关依赖 -->
+  <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-stream</artifactId>
+  </dependency>
+  ```
+
+- 项目`cloud-client-ribbon`和`cloud-server-user`已经通过引入`cloud-api-user`间接引入了`UserMessageStream`
+
+## 客户端启动报错
+
+- 报错信息
+
+  ```tex
+  Caused by: java.lang.IllegalStateException: A default binder has been requested, but there is more than one binder available for 'org.springframework.integration.channel.DirectChannel' : kafka,rabbit, and no default binder has been set.
+  	at org.springframework.cloud.stream.binder.DefaultBinderFactory.getBinder(DefaultBinderFactory.java:133)
+  ```
+
+- 报错原因
+
+  ```tex
+  因为同时引入了spring-cloud-starter-stream-kafka和spring-cloud-starter-stream-rabbit
+  ```
+
+- 解决方法(设置默认binder)
+
+  ```yaml
+  spring:
+      application:
+          name: spring-cloud-ribbon-client
+      cloud:
+          stream:
+          	# 设置默认binder
+              default-binder: rabbit
+  ```
+
+## 客户端`cloud-client-ribbon`发送消息
+
+```java
+package org.liangxiong.server.provider.controller;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.liangxiong.cloud.api.domain.User;
+import org.liangxiong.server.provider.stream.UserMessageStream;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.support.GenericMessage;
+import org.springframework.util.concurrent.ListenableFuture;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-22
+ * @Time:13:37
+ * @Description 消息处理
+ */
+@Slf4j
+@RequestMapping("/kafka")
+@RestController
+public class MessageController {
+
+    @Autowired
+    private UserMessageStream userMessageStream;
+
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Autowired
+    public MessageController(KafkaTemplate kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * 原生方式发送消息
+     *
+     * @param topic 消息主题
+     * @param key   关键字
+     * @param user  消息内容
+     * @return
+     */
+    @PostMapping("/message/object/primitive")
+    public JSONObject sendMessagePrimitively(@RequestParam String topic, @RequestParam String key, @RequestBody User user) {
+        ListenableFuture<SendResult<String, Object>> listenableFuture = kafkaTemplate.send(topic, key, user);
+        JSONObject result = new JSONObject(4);
+        try {
+            SendResult<String, Object> sendResult = listenableFuture.get(3, TimeUnit.SECONDS);
+            result.put("partition", sendResult.getRecordMetadata().partition());
+            result.put("timestamp", sendResult.getRecordMetadata().timestamp());
+        } catch (InterruptedException e) {
+            log.error("线程被中断");
+        } catch (ExecutionException e) {
+            log.error("任务执行异常");
+        } catch (TimeoutException e) {
+            log.error("任务执行超时");
+        }
+        return result;
+    }
+
+    /**
+     * Stream 的方式发送消息
+     *
+     * @param user
+     * @return
+     */
+    @PostMapping("/message/object/stream")
+    public boolean sendMessage(@RequestBody User user) {
+        MessageChannel messageChannel = userMessageStream.output();
+        Message<String> message = new GenericMessage(JSON.toJSONString(user));
+        return messageChannel.send(message, 3000);
+    }
+}
+```
 

@@ -7,6 +7,29 @@ management:
 spring:
     application:
         name: spring-cloud-user-server
+    cloud:
+        zookeeper:
+            connect-string: 192.168.43.2:2181,192.168.43.3:2181,192.168.43.4:2181
+        stream:
+            # 设置默认binder(kafka和rabbit二选一)
+            default-binder: kafka
+        kafka:
+            binder:
+                # 默认是本机MQ地址
+                brokers: 192.168.43.2,192.168.43.3,192.168.43.4
+                # 默认是本机zookeeper地址
+                zkNodes: 192.168.43.2,192.168.43.3,192.168.43.4
+                    # 激活Spring Cloud Stream Binding(激活@StreamListener)
+        bindings:
+            # 名称user-message-kafka来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
+            user-message:
+                # 配置topic
+                destination: test
+                # 解决客户端消费消息时报错:org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder | Could not convert message:
+                # you need to specify headerMode: raw with spring-cloud-streaam 1.3.x. It is not needed in 2.0.x.
+                consumer:
+                    # 解决报错
+                    header-mode: raw
     kafka:
         # 集群地址
         bootstrap-servers: 192.168.43.2:9092,192.168.43.3:9092,192.168.43.4:9092
