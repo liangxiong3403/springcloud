@@ -693,3 +693,160 @@ public class MessageController {
 }
 ```
 
+## Kafka序列化方式异常原因分析
+
+- `useNativeEncoding`官方说明
+
+  > When set to `true`, the outbound message is serialized directly by the client library, which must be configured correspondingly (for example, setting an appropriate Kafka producer value serializer). When this configuration is being used, the outbound message marshalling is not based on the `contentType` of the binding. When native encoding is used, it is the responsibility of the consumer to use an appropriate decoder (for example, the Kafka consumer value de-serializer) to deserialize the inbound message. Also, when native encoding and decoding is used, the `headerMode=embeddedHeaders` property is ignored and headers are not embedded in the message. See the consumer property `useNativeDecoding`.
+  >
+  > Default: `false`.
+
+- 配置方式
+
+  ```yaml
+  spring:
+      application:
+          name: spring-cloud-user-server
+      cloud:
+          stream:
+              # 设置默认binder(kafka和rabbit二选一)
+              default-binder: kafka
+              kafka:
+                  binder:
+                      # 默认是本机MQ地址
+                      brokers: 192.168.0.130,192.168.0.131,192.168.0.132
+                      # 默认是本机zookeeper地址
+                      zkNodes: 192.168.0.130,192.168.0.131,192.168.0.132
+              # 激活Spring Cloud Stream Binding(激活@StreamListener)
+              bindings:
+                  # 名称user-message-kafka来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
+                  user-message:
+                      # 配置topic
+                      destination: test
+                      # 解决客户端消费消息时报错:org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder | Could not convert message:
+                      # you need to specify headerMode: raw with spring-cloud-streaam 1.3.x. It is not needed in 2.0.x.
+                      consumer:
+                          # 解决报错
+                          header-mode: raw
+                      producer:
+                          # 原生序列化方式,
+                          useNativeEncoding: true
+  ```
+
+- 不配置`useNativeEncoding`的后果
+
+  > 官方序列化会生成contentType,最终的序列化方式会是二维数组,无法进行反序列化为对象
+
+- 源码分析
+
+  - 调用开始
+
+    ```java
+    package org.liangxiong.server.provider.controller;
+    
+    /**
+     * @author liangxiong
+     * @Date:2019-03-22
+     * @Time:13:37
+     * @Description 消息处理
+     */
+    @Slf4j
+    @RequestMapping("/kafka")
+    @RestController
+    public class MessageController {
+    
+        @Autowired
+        private UserMessageStream userMessageStream;
+    
+        /**
+         * Stream 的方式发送消息
+         *
+         * @param user
+         * @return
+         */
+        @PostMapping("/message/object/stream")
+        public boolean sendMessage(@RequestBody User user) {
+            MessageChannel messageChannel = userMessageStream.output();
+            Message<User> message = new GenericMessage(user);
+            return messageChannel.send(message, 3000);
+        }
+    }
+    ```
+
+  - Kafka源码进行反序列化
+
+    ```java
+    package org.springframework.cloud.stream.binder;
+    
+    public abstract class AbstractMessageChannelBinder<C extends ConsumerProperties, P extends ProducerProperties, PP extends ProvisioningProvider<C, P>>
+    		extends AbstractBinder<MessageChannel, C, P> {
+    
+    	private final class SendingHandler extends AbstractMessageHandler implements Lifecycle {
+    
+    		/**
+    		 * 省略代码...
+    		 */
+    		@Override
+    		protected void handleMessageInternal(Message<?> message) throws Exception {
+    		// 内部处理消息(根据配置项useNativeEncoding判断序列化方式)
+    			Message<?> messageToSend = (this.useNativeEncoding) ? message
+    					: serializeAndEmbedHeadersIfApplicable(message);
+    			this.delegate.handleMessage(messageToSend);
+    		}
+    
+    		// 序列化并且嵌入消息头信息(useNativeEncoding的值为true就执行这段代码)
+    		private Message<?> serializeAndEmbedHeadersIfApplicable(Message<?> message) throws Exception {
+    			MessageValues transformed = serializePayloadIfNecessary(message);
+    			byte[] payload;
+    			if (this.embedHeaders) {
+    				Object contentType = transformed.get(MessageHeaders.CONTENT_TYPE);
+    				// transform content type headers to String, so that they can be properly
+    				// embedded in JSON
+    				if (contentType instanceof MimeType) {
+    					transformed.put(MessageHeaders.CONTENT_TYPE, contentType.toString());
+    				}
+    				Object originalContentType = transformed.get(BinderHeaders.BINDER_ORIGINAL_CONTENT_TYPE);
+    				if (originalContentType instanceof MimeType) {
+    					transformed.put(BinderHeaders.BINDER_ORIGINAL_CONTENT_TYPE, originalContentType.toString());
+    				}
+    				payload = EmbeddedHeaderUtils.embedHeaders(transformed, this.embeddedHeaders);
+    			}
+    			else {
+    				payload = (byte[]) transformed.getPayload();
+    			}
+    			return getMessageBuilderFactory().withPayload(payload).copyHeaders(transformed.getHeaders()).build();
+    		}
+    	}
+    }
+    ```
+
+  - 官方源码增加头信息
+
+    ```java
+    public abstract class MessageSerializationUtils {
+    
+    	public static MessageValues serializePayload(Message<?> message, Codec codec) {
+            // 原始消息对象
+    		Object originalPayload = message.getPayload();
+            // 原始类型
+    		Object originalContentType = message.getHeaders().get(MessageHeaders.CONTENT_TYPE);
+    
+    		// Pass content type as String since some transport adapters will exclude
+    		// CONTENT_TYPE Header otherwise
+            // Kafka工具类生成content-type:application/x-java-object;type=org.liangxiong.cloud.api.domain.User
+    		Object contentType = JavaClassMimeTypeUtils
+    				.mimeTypeFromObject(originalPayload, ObjectUtils.nullSafeToString(originalContentType)).toString();
+    		// kafka自己序列化一次
+            Object payload = serializePayload(originalPayload, codec);
+    		MessageValues messageValues = new MessageValues(message);
+    		messageValues.setPayload(payload);
+    		messageValues.put(MessageHeaders.CONTENT_TYPE, contentType);
+    		if (originalContentType != null && !originalContentType.toString().equals(contentType.toString())) {
+    			messageValues.put(BinderHeaders.BINDER_ORIGINAL_CONTENT_TYPE, originalContentType.toString());
+    		}
+    		return messageValues;
+    	}
+    }
+    ```
+
+    

@@ -21,7 +21,7 @@ public class UserDeserializeUtil {
      * @param source
      */
     public static User deserializeObject(byte[] source) {
-        User user = null;
+        User user = new User();
         try {
             try (ByteArrayInputStream bis = new ByteArrayInputStream(source);
                  ObjectInputStream ois = new ObjectInputStream(bis)) {

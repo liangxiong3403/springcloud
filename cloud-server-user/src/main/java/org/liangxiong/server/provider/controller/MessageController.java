@@ -1,6 +1,5 @@
 package org.liangxiong.server.provider.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.liangxiong.cloud.api.domain.User;
@@ -74,7 +73,7 @@ public class MessageController {
     @PostMapping("/message/object/stream")
     public boolean sendMessage(@RequestBody User user) {
         MessageChannel messageChannel = userMessageStream.output();
-        Message<String> message = new GenericMessage(JSON.toJSONString(user));
+        Message<User> message = new GenericMessage(user);
         return messageChannel.send(message, 3000);
     }
 }
