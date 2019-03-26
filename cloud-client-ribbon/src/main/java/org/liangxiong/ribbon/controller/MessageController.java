@@ -24,7 +24,7 @@ public class MessageController {
     @Autowired
     private UserMessageStream userMessageStream;
 
-    private User user;
+    private User user = new User();
 
     /**
      * 获取消息
@@ -42,8 +42,14 @@ public class MessageController {
      * @return
      */
     @StreamListener(UserMessageStream.INPUT)
-    public void listenerMessage(byte[] data) {
-        user = UserDeserializeUtil.deserializeObject(data);
+    public void listenerMessage(Object source) {
+        if (source.getClass().isArray()) {
+            // 消息为二进制
+            user = UserDeserializeUtil.deserializeObject((byte[]) source);
+        } else if (source instanceof User) {
+            // 消息为原始对象(未被序列化)
+            user = (User) source;
+        }
         if (log.isInfoEnabled()) {
             log.info("receive message from StreamListener: {}", user.getUsername());
         }

@@ -26,7 +26,8 @@ public class UserMessageStreamService {
     //@PostConstruct
     public void init() {
         userMessageStream.input().subscribe(message -> {
-            User user = UserDeserializeUtil.deserializeObject((byte[]) message.getPayload());
+            Object source = message.getPayload();
+            User user = getUserFromPayload(source);
             if (log.isInfoEnabled()) {
                 log.info("receive message from SubscribableChannel: {}", user.getUsername());
             }
@@ -34,10 +35,23 @@ public class UserMessageStreamService {
     }
 
     //@ServiceActivator(inputChannel = UserMessageStream.INPUT)
-    public void receiveMessage(byte[] data) {
-        User user = UserDeserializeUtil.deserializeObject(data);
+    public void receiveMessage(Object source) {
+        User user = getUserFromPayload(source);
         if (log.isInfoEnabled()) {
             log.info("receive message from ServiceActivator: {}", user.getUsername());
         }
+    }
+
+    private User getUserFromPayload(Object source) {
+        User user = new User();
+        // 注意:需要判断消息类型
+        if (source.getClass().isArray()) {
+            // 消息为二进制
+            user = UserDeserializeUtil.deserializeObject((byte[]) source);
+        } else if (source instanceof User) {
+            // 消息为原始对象(未被序列化)
+            user = (User) source;
+        }
+        return user;
     }
 }
