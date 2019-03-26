@@ -43,13 +43,13 @@ remote:
         provider:
             application:
                 # 从配置中心获取服务提供方名称
-                name: ${remote.service.provider.application.name}
+                name: ${remote.service.name}
             host: localhost
             port: 8090
         provider2:
             application:
                 # 从配置中心获取服务提供方名称
-                name: ${remote.service.provider.application.name}
+                name: ${remote.service.name}
             host: localhost
             port: 18090
 # 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
