@@ -340,10 +340,20 @@ org.liangxiong.springcloud.config.CustomPropertySourceLocator
 - cloud-server-user(服务提供方)
 - cloud-api-user
 - cloud-dashboard-hystrix
+- cloud-server-eureka(注册中心)
 
 ## 服务调用
 
 - cloud-client-ribbon(客户端包含:负载均衡/断路器/服务调用/服务发现/配置客户端)
 - cloud-server-user(服务提供方)
 - cloud-api-user(集成了feign)
+- cloud-server-eureka(注册中心)
 - cloud-config-server-as-client-for-eureka(配置中心)
+
+## 自定义Cloud Stream Binder实现
+
+- cloud-stream-binder-activemq
+- cloud-client-ribbon
+- cloud-server-user
+- cloud-config-server-as-client-for-eureka
+- cloud-server-eureka(注册中心)

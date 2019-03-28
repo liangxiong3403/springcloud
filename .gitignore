@@ -40,3 +40,4 @@ hs_err_pid*
 /cloud-dashboard-hystrix/target/
 /cloud-client-feign/target/
 /cloud-gateway-zuul/target/
+/cloud-stream-binder-activemq/target/
