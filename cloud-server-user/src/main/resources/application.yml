@@ -17,6 +17,10 @@ spring:
                     brokers: 192.168.0.130,192.168.0.131,192.168.0.132
                     # 默认是本机zookeeper地址
                     zkNodes: 192.168.0.130,192.168.0.131,192.168.0.132
+            rabbit:
+                binder:
+                    adminAddresses: 192.168.0.130,192.168.0.131,192.168.0.132
+                    nodes: 192.168.0.130,192.168.0.131,192.168.0.132
             # 激活Spring Cloud Stream Binding(激活@StreamListener)
             bindings:
                 # 名称user-message来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
@@ -37,6 +41,10 @@ spring:
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.liangxiong.server.provider.component.ObjectSerializer
+    rabbitmq:
+        addresses: 192.168.0.130,192.168.0.131,192.168.0.132
+        username: admin
+        password: 123456
 eureka:
     client:
         service-url:
