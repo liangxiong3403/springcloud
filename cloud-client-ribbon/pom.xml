@@ -38,15 +38,15 @@
             <artifactId>spring-cloud-starter-config</artifactId>
         </dependency>
         <!-- Stream Kafka相关依赖 -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-stream-kafka</artifactId>
         </dependency>
-        <!-- Stream Rabbit相关依赖 -->
+        &lt;!&ndash; Stream Rabbit相关依赖 &ndash;&gt;
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-stream-rabbit</artifactId>
-        </dependency>
+        </dependency>-->
         <!-- ActiveMQ相关依赖 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

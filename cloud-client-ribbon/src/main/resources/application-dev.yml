@@ -1,0 +1,64 @@
+server:
+    port: 8089
+management:
+    port: 9010
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-ribbon-client
+    cloud:
+        circuit:
+            breaker:
+                # 控制@EnableCircuitBreaker的开关方式一
+                enabled: true
+# 控制@EnableCircuitBreaker方式二
+hystrix:
+    stream:
+        endpoint:
+            enabled: true
+# 服务提供方配置信息
+remote:
+    service:
+        provider:
+            application:
+                # 从配置中心获取服务提供方名称
+                name: ${remote.service.name}
+            host: localhost
+            port: 8090
+        provider2:
+            application:
+                # 从配置中心获取服务提供方名称
+                name: ${remote.service.name}
+            host: localhost
+            port: 18090
+# 配置ribbon服务提供方(缺点是需要手动配置,生产环境应使用eureka注册中心来发现服务端)
+spring-cloud-user-server:
+    ribbon:
+        # 集群服务列表
+        #listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port},${remote.service.provider2.host}:${remote.service.provider2.port}
+        # 单个服务
+        #listOfServers: http://${remote.service.provider.host}:${remote.service.provider.port}
+        # 通过配置方式引入自定义IPing实现类
+        NFLoadBalancerPingClassName: org.liangxiong.ribbon.ping.DiyPingImpl
+# 配置eureka服务端信息
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8083/eureka/
+        registry-fetch-interval-seconds: 15
+        # 引入eureka客户端依赖后,临时关闭eureka客户端功能
+        #enabled: false
+# 指定cloud-api-user项目中@FeignClient("${provider.user.service.name}");注意：当集成配置中心时,"remote.service.provider.application.name"这个配置可以从配置中心获取
+provider:
+    user:
+        service:
+            name: ${remote.service.provider.application.name}
+# 开启feign对hystrix的支持
+feign:
+    hystrix:
+        enabled: true
+# 定义接口超时时间,动态调整
+method:
+    execution:
+        timeout: 30

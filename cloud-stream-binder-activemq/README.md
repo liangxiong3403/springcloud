@@ -264,11 +264,6 @@ public class ActiveController {
 ## 引入依赖
 
 ```xml
-<!-- 自动装配依赖 -->
-<dependency>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-autoconfigure</artifactId>
-</dependency>
 <!-- Cloud Stream相关依赖 -->
 <dependency>
     <groupId>org.springframework.cloud</groupId>
@@ -308,24 +303,28 @@ public class ActiveMessageChannelBinder implements Binder<MessageChannel, Consum
      */
     @Override
     public Binding<MessageChannel> bindConsumer(String name, String group, MessageChannel messageChannel, ConsumerProperties consumerProperties) {
+        // 生产环境中应该使用连接池操作
         ConnectionFactory factory = jmsTemplate.getConnectionFactory();
-        Connection connection = null;
-        Session session = null;
-        MessageConsumer consumer = null;
         try {
-            connection = factory.createConnection();
+            Connection connection = factory.createConnection();
             // 启动连接
             connection.start();
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            // 创建会话
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            // 创建目的地
             Destination destination = new ActiveMQQueue(name);
-            consumer = session.createConsumer(destination);
+            MessageConsumer consumer = session.createConsumer(destination);
             consumer.setMessageListener(message -> {
-                if (message instanceof ActiveMQObjectMessage) {
-                    ActiveMQObjectMessage objectMessage = (ActiveMQObjectMessage) message;
+                // 注意:回调函数监听消息,如果此时connection关闭,则消息监听失败!
+                if (message instanceof ObjectMessage) {
+                    ObjectMessage objectMessage = (ObjectMessage) message;
                     try {
                         Object data = objectMessage.getObject();
+                        if (log.isInfoEnabled()) {
+                            log.info("receive message from activemq binder");
+                        }
                         // 发送给input管道
-                        messageChannel.send(new GenericMessage(data));
+                        messageChannel.send(new GenericMessage<>(data));
                     } catch (JMSException e) {
                         log.error("get object from message error: {}", e.getMessage());
                     }
@@ -333,28 +332,6 @@ public class ActiveMessageChannelBinder implements Binder<MessageChannel, Consum
             });
         } catch (JMSException e) {
             log.error("consumer execution error: {}", e.getMessage());
-        } finally {
-            if (null != consumer) {
-                try {
-                    consumer.close();
-                } catch (JMSException e) {
-                    log.error("consumer cloud error: {}", e.getMessage());
-                }
-            }
-            if (null != session) {
-                try {
-                    session.close();
-                } catch (JMSException e) {
-                    log.error("session cloud error: {}", e.getMessage());
-                }
-            }
-            if (null != connection) {
-                try {
-                    connection.close();
-                } catch (JMSException e) {
-                    log.error("connection cloud error: {}", e.getMessage());
-                }
-            }
         }
         return () -> log.info("consume message...");
     }
