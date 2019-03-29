@@ -7,8 +7,6 @@ import org.liangxiong.server.provider.stream.UserMessageStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.util.concurrent.ListenableFuture;
 import org.springframework.web.bind.annotation.*;
@@ -72,8 +70,6 @@ public class MessageController {
      */
     @PostMapping("/message/object/stream")
     public boolean sendMessage(@RequestBody User user) {
-        MessageChannel messageChannel = userMessageStream.output();
-        Message<User> message = new GenericMessage(user);
-        return messageChannel.send(message, 3000);
+        return userMessageStream.output().send(new GenericMessage(user), 3000);
     }
 }

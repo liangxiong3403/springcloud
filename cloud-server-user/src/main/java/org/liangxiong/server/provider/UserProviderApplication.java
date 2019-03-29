@@ -1,5 +1,6 @@
 package org.liangxiong.server.provider;
 
+import org.liangxiong.server.provider.stream.ActiveMessageStream;
 import org.liangxiong.server.provider.stream.UserMessageStream;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,7 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
  * @Time:11:04
  * @Description 用户服务提供者, Edgware版本开始,@EnableEurekaClient或@EnableDiscoveryClient是非必需地
  */
-@EnableBinding(UserMessageStream.class)
+@EnableBinding({UserMessageStream.class, ActiveMessageStream.class})
 @EnableHystrix
 @EnableDiscoveryClient
 @SpringBootApplication

@@ -35,6 +35,10 @@ spring:
                     producer:
                         # 使用自定义序列化方式,
                         useNativeEncoding: true
+                active-message:
+                    destination: test
+                    # 名称来自于META-INF/spring.factories
+                    binder: activemq
     kafka:
         # 集群地址
         bootstrap-servers: 192.168.0.130:9092,192.168.0.131:9092,192.168.0.132:9092
@@ -47,6 +51,9 @@ spring:
         password: 123456
     activemq:
         broker-url: tcp://localhost:61616
+    jms:
+        template:
+            default-destination: test
 eureka:
     client:
         service-url:

@@ -36,12 +36,21 @@ spring:
                     consumer:
                         # 解决报错
                         header-mode: raw
+                active-message:
+                    destination: test
+                    # 名称来自于META-INF/spring.factories
+                    binder: activemq
     rabbitmq:
         addresses: 192.168.0.130,192.168.0.131,192.168.0.132
         username: admin
         password: 123456
     activemq:
         broker-url: tcp://localhost:61616
+        packages:
+            trust-all: true
+    jms:
+        template:
+            default-destination: test
 # 控制@EnableCircuitBreaker方式二
 hystrix:
     stream:

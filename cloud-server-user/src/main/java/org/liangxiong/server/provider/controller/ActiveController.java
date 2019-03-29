@@ -2,15 +2,16 @@ package org.liangxiong.server.provider.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.activemq.command.ActiveMQTextMessage;
+import org.liangxiong.cloud.api.domain.User;
+import org.liangxiong.server.provider.stream.ActiveMessageStream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.core.JmsTemplate;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.messaging.support.GenericMessage;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
 
 import javax.jms.*;
 
@@ -31,14 +32,17 @@ public class ActiveController {
     @Autowired
     private JmsTemplate jmsTemplate;
 
+    @Autowired
+    private ActiveMessageStream activeMessageStream;
+
     /**
      * 原生api发送消息
      *
      * @param queueName 队列名称
-     * @param content   消息内容
+     * @param user      消息内容
      */
     @PostMapping("/message/primitive")
-    public void sendMessagePrimitive(@RequestParam String queueName, @RequestParam String content) {
+    public void sendMessagePrimitive(@RequestParam String queueName, @RequestBody User user) {
         // 构造连接工厂
         ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         Connection connection = null;
@@ -54,8 +58,8 @@ public class ActiveController {
             // 创建生产者
             producer = session.createProducer(destination);
             // 构造消息
-            ActiveMQTextMessage message = new ActiveMQTextMessage();
-            message.setText(content);
+            ActiveMQObjectMessage message = new ActiveMQObjectMessage();
+            message.setObject(user);
             // 发送消息
             producer.send(message);
         } catch (JMSException e) {
@@ -89,11 +93,25 @@ public class ActiveController {
      * 封装方式发送消息
      *
      * @param queueName 队列名称
-     * @param content   消息内容
+     * @param user      消息内容
      */
     @PostMapping("/message/advanced")
-    public void sendMessageAdvanced(@RequestParam String queueName, @RequestParam String content) {
-        Destination destination = new ActiveMQQueue(queueName);
-        jmsTemplate.send(destination, e -> e.createTextMessage(content));
+    public void sendMessageAdvanced(String queueName, @RequestBody User user) {
+        if (StringUtils.hasText(queueName)) {
+            Destination destination = new ActiveMQQueue(queueName);
+            jmsTemplate.convertAndSend(destination, user);
+        } else {
+            jmsTemplate.convertAndSend(user);
+        }
+    }
+
+    /**
+     * 封装方式发送消息
+     *
+     * @param user 消息内容
+     */
+    @PostMapping("/message/binder")
+    public boolean sendMessageBinder(@RequestBody User user) {
+        return activeMessageStream.output().send(new GenericMessage<>(user));
     }
 }

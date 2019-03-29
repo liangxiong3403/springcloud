@@ -260,3 +260,305 @@ public class ActiveController {
 # 自定义实现ActiveMQ的Cloud Stream Binder实现
 
 ## 创建项目`cloud-stream-binder-activemq`
+
+## 引入依赖
+
+```xml
+<!-- 自动装配依赖 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-autoconfigure</artifactId>
+</dependency>
+<!-- Cloud Stream相关依赖 -->
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-stream</artifactId>
+</dependency>
+<!-- ActiveMQ的依赖 -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-activemq</artifactId>
+</dependency>
+```
+
+## 自定义Binder实现类
+
+```java
+package org.liangxiong.stream.binder.activemq;
+/**
+ * @author liangxiong
+ * @Date:2019-03-29
+ * @Time:9:41
+ * @Description ActiveMQ的Stream Cloud Binder实现
+ */
+@Slf4j
+public class ActiveMessageChannelBinder implements Binder<MessageChannel, ConsumerProperties, ProducerProperties> {
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
+
+    /**
+     * 接收ActiveMQ的消息
+     *
+     * @param name
+     * @param group
+     * @param messageChannel
+     * @param consumerProperties
+     * @return
+     */
+    @Override
+    public Binding<MessageChannel> bindConsumer(String name, String group, MessageChannel messageChannel, ConsumerProperties consumerProperties) {
+        ConnectionFactory factory = jmsTemplate.getConnectionFactory();
+        Connection connection = null;
+        Session session = null;
+        MessageConsumer consumer = null;
+        try {
+            connection = factory.createConnection();
+            // 启动连接
+            connection.start();
+            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+            Destination destination = new ActiveMQQueue(name);
+            consumer = session.createConsumer(destination);
+            consumer.setMessageListener(message -> {
+                if (message instanceof ActiveMQObjectMessage) {
+                    ActiveMQObjectMessage objectMessage = (ActiveMQObjectMessage) message;
+                    try {
+                        Object data = objectMessage.getObject();
+                        // 发送给input管道
+                        messageChannel.send(new GenericMessage(data));
+                    } catch (JMSException e) {
+                        log.error("get object from message error: {}", e.getMessage());
+                    }
+                }
+            });
+        } catch (JMSException e) {
+            log.error("consumer execution error: {}", e.getMessage());
+        } finally {
+            if (null != consumer) {
+                try {
+                    consumer.close();
+                } catch (JMSException e) {
+                    log.error("consumer cloud error: {}", e.getMessage());
+                }
+            }
+            if (null != session) {
+                try {
+                    session.close();
+                } catch (JMSException e) {
+                    log.error("session cloud error: {}", e.getMessage());
+                }
+            }
+            if (null != connection) {
+                try {
+                    connection.close();
+                } catch (JMSException e) {
+                    log.error("connection cloud error: {}", e.getMessage());
+                }
+            }
+        }
+        return () -> log.info("consume message...");
+    }
+
+    /**
+     * 发送消息到ActiveMQ
+     *
+     * @param name
+     * @param messageChannel
+     * @param producerProperties
+     * @return
+     */
+    @Override
+    public Binding<MessageChannel> bindProducer(String name, MessageChannel messageChannel, ProducerProperties producerProperties) {
+        // 判断MessageChannel的类型
+        Assert.isInstanceOf(SubscribableChannel.class, messageChannel, "MessageChannel must be SubscribableChannel!");
+        SubscribableChannel subscribableChannel = (SubscribableChannel) messageChannel;
+        // 消息发送到output管道
+        subscribableChannel.subscribe(message -> {
+            Object payload = message.getPayload();
+            jmsTemplate.convertAndSend(payload);
+        });
+        return () -> log.info("produce message...");
+    }
+}
+```
+
+## 装配Binder实现类
+
+```java
+package org.liangxiong.stream.binder.activemq.config;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-29
+ * @Time:10:00
+ * @Description 自动装配ActiveMessageChannelBinder的bean
+ */
+@ConditionalOnMissingBean(ActiveMessageChannelBinder.class)
+@Configuration
+public class ActiveBinderConfiguration {
+
+    @Bean
+    ActiveMessageChannelBinder activeMessageChannelBinder() {
+        return new ActiveMessageChannelBinder();
+    }
+}
+```
+
+## 配置Binder的定义(META-INF/spring.binders)
+
+```properties
+activemq: org.liangxiong.stream.binder.activemq.config.ActiveBinderConfiguration
+```
+
+## 项目`cloud-stream-binder-activemq`安装到本地Maven仓库
+
+## 其他项目引入`cloud-stream-binder-activemq`
+
+- `cloud-server-user`引入依赖
+
+  ```xml
+  <!-- 自定义ActiveMQ的Binder实现 -->
+  <dependency>
+      <groupId>org.liangxiong</groupId>
+      <artifactId>cloud-stream-binder-activemq</artifactId>
+  </dependency>
+  ```
+
+- `cloud-client-ribbon`引入依赖
+
+  ```xml
+  <!-- 自定义ActiveMQ的Binder实现 -->
+  <dependency>
+      <groupId>org.liangxiong</groupId>
+      <artifactId>cloud-stream-binder-activemq</artifactId>
+  </dependency>
+  ```
+
+## 配置生产者`cloud-server-user`
+
+```yaml
+server:
+    port: 8090
+management:
+    port: 9011
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-user-server
+    cloud:
+        stream:
+            # 激活Spring Cloud Stream Binding(激活@StreamListener)
+            bindings:
+                active-message:
+                    destination: test
+                    # 名称来自于META-INF/spring.factories
+                    binder: activemq
+    rabbitmq:
+        addresses: 192.168.0.130,192.168.0.131,192.168.0.132
+        username: admin
+        password: 123456
+    activemq:
+        broker-url: tcp://localhost:61616
+    jms:
+        template:
+            default-destination: test
+```
+
+## 发送消息
+
+```java
+package org.liangxiong.server.provider.controller;
+
+/**
+ * @author liangxiong
+ * @Date:2019-03-28
+ * @Time:14:53
+ * @Description ActiveMQ发送消息
+ */
+@Slf4j
+@RequestMapping("/activemq")
+@RestController
+public class ActiveController {
+
+    @Autowired
+    private ActiveMessageStream activeMessageStream;
+
+    /**
+     * 封装方式发送消息
+     *
+     * @param user 消息内容
+     */
+    @PostMapping("/message/binder")
+    public boolean sendMessageBinder(@RequestBody User user) {
+        return activeMessageStream.output().send(new GenericMessage<>(user));
+    }
+}
+```
+
+## 配置消费者
+
+```yaml
+server:
+    port: 8089
+management:
+    port: 9010
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-ribbon-client
+    cloud:
+        circuit:
+            breaker:
+                # 控制@EnableCircuitBreaker的开关方式一
+                enabled: true
+        stream:
+            # 激活Spring Cloud Stream Binding(激活@StreamListener)
+            bindings:
+                active-message:
+                    destination: test
+                    # 名称来自于META-INF/spring.factories
+                    binder: activemq
+	activemq:
+		broker-url: tcp://localhost:61616
+		packages:
+			trust-all: true
+    jms:
+        template:
+            default-destination: test
+```
+
+## 消费消息
+
+```java
+package org.liangxiong.ribbon.controller;
+/**
+ * @author liangxiong
+ * @Date:2019-03-28
+ * @Time:14:53
+ * @Description ActiveMQ接收消息
+ */
+@Slf4j
+@RequestMapping("/activemq")
+@RestController
+public class ActiveController {
+
+    @Autowired
+    private JmsTemplate jmsTemplate;
+
+    /**
+     * 通过Cloud Stream Binder获取消息
+     *
+     * @param source
+     */
+    @StreamListener(ActiveMessageStream.INPUT)
+    public void receiveMessageFromChannel(Object source) {
+        User user = UserConsumerUtil.getUserFromPayload(source);
+        if (log.isInfoEnabled()) {
+            log.info("receive message from StreamListener: {}", user.getUsername());
+        }
+    }
+}
+```
+

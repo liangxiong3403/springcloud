@@ -15,6 +15,9 @@ import java.io.ObjectInputStream;
 @Slf4j
 public class UserDeserializeUtil {
 
+    private UserDeserializeUtil() {
+    }
+
     /**
      * 对字节数组进行反序列化
      *

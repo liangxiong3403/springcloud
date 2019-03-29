@@ -2,11 +2,17 @@ package org.liangxiong.ribbon.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.activemq.command.ActiveMQObjectMessage;
 import org.apache.activemq.command.ActiveMQQueue;
-import org.apache.activemq.command.ActiveMQTextMessage;
+import org.liangxiong.cloud.api.domain.User;
+import org.liangxiong.ribbon.stream.ActiveMessageStream;
+import org.liangxiong.ribbon.util.UserConsumerUtil;
+import org.liangxiong.ribbon.util.UserDeserializeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.stream.annotation.StreamListener;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,13 +43,13 @@ public class ActiveController {
      * @param queueName 队列名称
      */
     @GetMapping("/message/primitive")
-    public String receiveMessagePrimitive(@RequestParam String queueName) {
+    public Object receiveMessagePrimitive(@RequestParam String queueName) {
         // 构造连接工厂
         ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         Connection connection = null;
         Session session = null;
         MessageConsumer consumer = null;
-        String text = null;
+        Object data = null;
         try {
             // 获取连接
             connection = factory.createConnection();
@@ -57,10 +63,10 @@ public class ActiveController {
             consumer = session.createConsumer(destination);
             // 接收消息
             Message message = consumer.receive(200);
-            if (message instanceof ActiveMQTextMessage) {
-                ActiveMQTextMessage textMessage = (ActiveMQTextMessage) message;
-                text = textMessage.getText();
-                log.info("receive message from activemq: {}", text);
+            if (message instanceof ActiveMQObjectMessage) {
+                ActiveMQObjectMessage objectMessage = (ActiveMQObjectMessage) message;
+                data = UserDeserializeUtil.deserializeObject(objectMessage.getContent().data);
+                log.info("receive message from activemq: {}", data);
             }
         } catch (JMSException e) {
             log.error("connection create error: {}", e.getMessage());
@@ -87,7 +93,7 @@ public class ActiveController {
                 }
             }
         }
-        return text;
+        return data;
     }
 
     /**
@@ -96,19 +102,25 @@ public class ActiveController {
      * @param queueName 队列名称
      */
     @GetMapping("/message/advanced")
-    public String receiveMessageAdvanced(@RequestParam String queueName) {
-        Destination destination = new ActiveMQQueue(queueName);
-        Message message = jmsTemplate.receive(destination);
-        String text = null;
-        if (message instanceof ActiveMQTextMessage) {
-            ActiveMQTextMessage textMessage = (ActiveMQTextMessage) message;
-            try {
-                text = textMessage.getText();
-                log.info("receive message from activemq: {}", text);
-            } catch (JMSException e) {
-                log.error("connection close exception: {}", e.getMessage());
-            }
+    public Object receiveMessageAdvanced(String queueName) {
+        jmsTemplate.setReceiveTimeout(1000);
+        if (StringUtils.hasText(queueName)) {
+            Destination destination = new ActiveMQQueue(queueName);
+            return jmsTemplate.receiveAndConvert(destination);
         }
-        return text;
+        return jmsTemplate.receiveAndConvert();
+    }
+
+    /**
+     * 通过Cloud Stream Binder获取消息
+     *
+     * @param source
+     */
+    @StreamListener(ActiveMessageStream.INPUT)
+    public void receiveMessageFromChannel(Object source) {
+        User user = UserConsumerUtil.getUserFromPayload(source);
+        if (log.isInfoEnabled()) {
+            log.info("receive message from StreamListener: {}", user.getUsername());
+        }
     }
 }

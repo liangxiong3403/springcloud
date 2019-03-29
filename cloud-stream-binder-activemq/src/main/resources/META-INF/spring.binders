@@ -1,0 +1,1 @@
+activemq: org.liangxiong.stream.binder.activemq.config.ActiveBinderConfiguration

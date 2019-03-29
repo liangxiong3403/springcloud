@@ -12,6 +12,23 @@
     <artifactId>cloud-stream-binder-activemq</artifactId>
     <description>Cloud Stream Binder的ActiveMQ实现</description>
 
+    <dependencies>
+        <!-- 自动装配依赖 -->
+        <!--<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>-->
+        <!-- Cloud Stream相关依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream</artifactId>
+        </dependency>
+        <!-- ActiveMQ的依赖 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-activemq</artifactId>
+        </dependency>
+    </dependencies>
 
     <build>
         <finalName>${project.name}</finalName>
