@@ -40,6 +40,10 @@ spring:
         addresses: 192.168.0.130,192.168.0.131,192.168.0.132
         username: admin
         password: 123456
+    activemq:
+        broker-url: tcp://localhost:61616
+        packages:
+            trust-all: true
 # 控制@EnableCircuitBreaker方式二
 hystrix:
     stream:
