@@ -9,6 +9,8 @@ spring:
         name: spring-cloud-user-server
     cloud:
         stream:
+            # 设置默认binder
+            default-binder: activemq
             # 激活Spring Cloud Stream Binding(激活@StreamListener)
             bindings:
                 active-message:

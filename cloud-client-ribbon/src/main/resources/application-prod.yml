@@ -13,6 +13,8 @@ spring:
                 # 控制@EnableCircuitBreaker的开关方式一
                 enabled: true
         stream:
+            # 设置默认binder
+            default-binder: activemq
             # 激活Spring Cloud Stream Binding(激活@StreamListener)
             bindings:
                 active-message:
@@ -22,6 +24,7 @@ spring:
     activemq:
         broker-url: tcp://localhost:61616
         packages:
+            # 参考http://activemq.apache.org/objectmessage.html
             trust-all: true
     jms:
         template:

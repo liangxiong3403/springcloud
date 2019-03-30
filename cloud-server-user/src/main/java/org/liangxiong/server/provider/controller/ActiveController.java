@@ -42,9 +42,9 @@ public class ActiveController {
      * @param user      消息内容
      */
     @PostMapping("/message/primitive")
-    public void sendMessagePrimitive(@RequestParam String queueName, @RequestBody User user) {
+    public boolean sendMessagePrimitive(@RequestParam String queueName, @RequestBody User user) {
         // 构造连接工厂
-        ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+        ConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
         Connection connection = null;
         Session session = null;
         MessageProducer producer = null;
@@ -62,6 +62,7 @@ public class ActiveController {
             message.setObject(user);
             // 发送消息
             producer.send(message);
+            return true;
         } catch (JMSException e) {
             log.error("connection create error: {}", e.getMessage());
         } finally {
@@ -87,6 +88,7 @@ public class ActiveController {
                 }
             }
         }
+        return false;
     }
 
     /**
@@ -96,13 +98,14 @@ public class ActiveController {
      * @param user      消息内容
      */
     @PostMapping("/message/advanced")
-    public void sendMessageAdvanced(String queueName, @RequestBody User user) {
+    public boolean sendMessageAdvanced(String queueName, @RequestBody User user) {
         if (StringUtils.hasText(queueName)) {
             Destination destination = new ActiveMQQueue(queueName);
             jmsTemplate.convertAndSend(destination, user);
         } else {
             jmsTemplate.convertAndSend(user);
         }
+        return true;
     }
 
     /**

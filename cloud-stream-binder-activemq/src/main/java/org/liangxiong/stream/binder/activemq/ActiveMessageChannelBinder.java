@@ -90,7 +90,7 @@ public class ActiveMessageChannelBinder implements Binder<MessageChannel, Consum
                 log.info("send message from activemq binder");
             }
             // 消息发送到output管道
-            jmsTemplate.convertAndSend(payload);
+            jmsTemplate.convertAndSend(name, payload);
         });
         return () -> log.info("produce message...");
     }
