@@ -4,6 +4,11 @@ server:
 spring:
     application:
         name: spring-cloud-eureka-server
+endpoints:
+    jolokia:
+        sensitive: false
+hawtio:
+    authenticationEnabled: false
 management:
     security:
         enabled: false
