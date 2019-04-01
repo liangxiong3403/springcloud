@@ -1570,3 +1570,254 @@ public static HystrixCommandProperties getCommandProperties(HystrixCommandKey ke
 
 - `commandKey`是获取HystrixCommandProperties的关键
 
+# Spring Cloud Bus
+
+## 环境准备(重要)
+
+```tex
+需要提前启动RabbitMQ服务器或者Kafka服务器,因为BUS的实现既可以是RabbitMQ,也可以是Kafka
+```
+
+## 添加依赖
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-bus-amqp</artifactId>
+</dependency>
+```
+
+## 访问bus端点(destination=`ApplicationContext` ID)
+
+> `ApplicationContext` ID combination of the `spring.application.name`, active profiles `name` and `server.port` by default
+
+- 单点传播
+
+  > curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-user-server:prod:8090
+
+- 集群传播
+
+  > curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-user-server:**
+
+## 通过日志查看监听器
+
+```tex
+2019-04-01 10:42:50.311 | INFO  | http-nio-9010-exec-10 | org.springframework.cloud.bus.event.RefreshListener | Received remote refresh request. Keys refreshed []
+```
+
+## 查看监听器
+
+```java
+public class RefreshListener
+		implements ApplicationListener<RefreshRemoteApplicationEvent> {
+
+	private static Log log = LogFactory.getLog(RefreshListener.class);
+
+	private ContextRefresher contextRefresher;
+
+	public RefreshListener(ContextRefresher contextRefresher) {
+		this.contextRefresher = contextRefresher;
+	}
+
+	@Override
+	public void onApplicationEvent(RefreshRemoteApplicationEvent event) {
+		Set<String> keys = contextRefresher.refresh();
+		log.info("Received remote refresh request. Keys refreshed " + keys);
+	}
+}
+```
+
+## 查看事件`RefreshRemoteApplicationEvent`
+
+```java
+public class RefreshRemoteApplicationEvent extends RemoteApplicationEvent {
+
+	@SuppressWarnings("unused")
+	private RefreshRemoteApplicationEvent() {
+		// for serializers
+	}
+
+	public RefreshRemoteApplicationEvent(Object source, String originService,
+			String destinationService) {
+		super(source, originService, destinationService);
+	}
+}
+```
+
+## 自定义监听器,监听同一个事件`RefreshRemoteApplicationEvent`
+
+```java
+@Slf4j
+@Configuration
+public class BusConfiguration {
+
+    /**
+     * 监听特定事件{@link RefreshRemoteApplicationEvent}
+     *
+     * @param event
+     */
+    @EventListener
+    public void onRefreshRemoteApplicationEvent(RefreshRemoteApplicationEvent event) {
+        log.info("source: {}, originService: {}, destinationService: {}", event.getSource(), event.getOriginService(), event.getDestinationService());
+    }
+}
+```
+
+## 激活bud信息跟踪
+
+```properties
+spring.cloud.bus.trace.enabled=true
+```
+
+## 查看信息`http://localhost:9011/trace`
+
+```json
+[{
+	"timestamp": "2019-04-01T08:03:04.649+0000",
+	"info": {
+		"signal": "spring.cloud.bus.ack",
+		"event": "EnvironmentChangeRemoteApplicationEvent",
+		"id": "64f0ffab-a3f4-4adf-bfe8-08e6e710b1c4",
+		"origin": "spring-cloud-ribbon-client:test:8089",
+		"destination": "**"
+	}
+}, {
+	"timestamp": "2019-04-01T08:02:42.893+0000",
+	"info": {
+		"signal": "spring.cloud.bus.sent",
+		"type": "EnvironmentChangeRemoteApplicationEvent",
+		"id": "64f0ffab-a3f4-4adf-bfe8-08e6e710b1c4",
+		"origin": "spring-cloud-ribbon-client:test:8089",
+		"destination": "**:**"
+	}
+}, {
+	"timestamp": "2019-04-01T08:02:42.893+0000",
+	"info": {
+		"signal": "spring.cloud.bus.ack",
+		"event": "EnvironmentChangeRemoteApplicationEvent",
+		"id": "64f0ffab-a3f4-4adf-bfe8-08e6e710b1c4",
+		"origin": "spring-cloud-user-server:test:8090",
+		"destination": "**"
+	}
+}]
+```
+
+## 模拟三台客户端
+
+- 第一台
+  - 服务端口8089
+  - 管理端口9010
+- 第二台
+  - 服务端口18089
+  - 管理端口19010
+- 第三台
+  - 服务端口28089
+  - 管理端口29010
+
+## 广播方式发送事件
+
+- 请求`curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-ribbon-client:**`
+
+- 查看结果
+
+  - 第一台主机`<http://localhost:9010/trace>`
+
+    ```json
+    [{
+    	"timestamp": 1554108594031,
+    	"info": {
+    		"signal": "spring.cloud.bus.ack",
+    		"event": "RefreshRemoteApplicationEvent",
+    		"id": "df3d8f7a-e5a5-4cf8-be79-4cd321a1062d",
+    		"origin": "spring-cloud-ribbon-client:test:28089",
+    		"destination": "spring-cloud-ribbon-client:**"
+    	}
+    }, {
+    	"timestamp": 1554108589103,
+    	"info": {
+    		"signal": "spring.cloud.bus.ack",
+    		"event": "RefreshRemoteApplicationEvent",
+    		"id": "df3d8f7a-e5a5-4cf8-be79-4cd321a1062d",
+    		"origin": "spring-cloud-ribbon-client:test:18089",
+    		"destination": "spring-cloud-ribbon-client:**"
+    	}
+    }, {
+    	"timestamp": 1554108586134,
+    	"info": {
+    		"signal": "spring.cloud.bus.sent",
+    		"type": "RefreshRemoteApplicationEvent",
+    		"id": "df3d8f7a-e5a5-4cf8-be79-4cd321a1062d",
+    		"origin": "spring-cloud-ribbon-client:test:8089",
+    		"destination": "spring-cloud-ribbon-client:**"
+    	}
+    }, {
+    	"timestamp": 1554108586130,
+    	"info": {
+    		"signal": "spring.cloud.bus.ack",
+    		"event": "RefreshRemoteApplicationEvent",
+    		"id": "df3d8f7a-e5a5-4cf8-be79-4cd321a1062d",
+    		"origin": "spring-cloud-ribbon-client:test:8089",
+    		"destination": "spring-cloud-ribbon-client:**"
+    	}
+    }]
+    ```
+
+  - 第二台主机与第一台主机内容一样
+
+  - 第三台主机与第一台主机内容一样
+
+- 结论
+
+  ```tex
+  发送:第一台主机
+  接收:第一台主机,第二台主机,第三台主机
+  ```
+
+## 单点方式发送事件
+
+- 请求`curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-user-server:prod:8090`
+
+- 查看结果
+
+  - 第一台主机`<http://localhost:9010/trace>`
+
+    ```json
+    {
+    	timestamp: 1554109724077,
+        info: {
+            signal: "spring.cloud.bus.sent",
+            type: "RefreshRemoteApplicationEvent",
+            id: "89268ed0-7eac-4578-9a36-b49e62f349d8",
+            origin: "spring-cloud-ribbon-client:test:8089",
+            destination: "spring-cloud-user-server:prod:8090"
+        }
+    }
+    ```
+
+  - 第二台主机与第一台主机内容一样
+
+  - 第三台主机与第一台主机内容一样
+
+  - 消息接收端`spring-cloud-user-server`结果
+
+    ```json
+    {
+        timestamp: "2019-04-01T09:08:44.077+0000",
+        info: {
+            signal: "spring.cloud.bus.sent",
+            type: "RefreshRemoteApplicationEvent",
+            id: "89268ed0-7eac-4578-9a36-b49e62f349d8",
+            origin: "spring-cloud-ribbon-client:test:8089",
+            destination: "spring-cloud-user-server:prod:8090"
+        }
+    }
+    ```
+
+- 结论
+
+  ```tex
+  发送:第一台主机
+  接收:第一台主机,第二台主机,第三台主机
+  ```
+
+  

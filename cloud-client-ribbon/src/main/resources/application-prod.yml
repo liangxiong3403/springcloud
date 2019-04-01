@@ -8,6 +8,10 @@ spring:
     application:
         name: spring-cloud-ribbon-client
     cloud:
+        bus:
+            # Bus events (subclasses of RemoteApplicationEvent) can be traced
+            trace:
+                enabled: true
         circuit:
             breaker:
                 # 控制@EnableCircuitBreaker的开关方式一

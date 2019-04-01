@@ -8,6 +8,9 @@ spring:
     application:
         name: spring-cloud-user-server
     cloud:
+        bus:
+            trace:
+                enabled: true
         stream:
             # 设置默认binder(kafka和rabbit二选一)
             default-binder: rabbit
@@ -45,8 +48,6 @@ spring:
         addresses: 192.168.0.130,192.168.0.131,192.168.0.132
         username: admin
         password: 123456
-    activemq:
-        broker-url: tcp://localhost:61616
 eureka:
     client:
         service-url:

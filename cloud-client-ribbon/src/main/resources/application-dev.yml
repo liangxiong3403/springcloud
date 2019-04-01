@@ -8,6 +8,9 @@ spring:
     application:
         name: spring-cloud-ribbon-client
     cloud:
+        bus:
+            trace:
+                enabled: true
         circuit:
             breaker:
                 # 控制@EnableCircuitBreaker的开关方式一

@@ -8,6 +8,9 @@ spring:
     application:
         name: spring-cloud-user-server
     cloud:
+        bus:
+            trace:
+                enabled: true
         stream:
             # 设置默认binder
             default-binder: activemq

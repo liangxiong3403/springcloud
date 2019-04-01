@@ -31,7 +31,7 @@ import javax.jms.*;
 @RestController
 public class ActiveController {
 
-    @Value("${spring.activemq.broker-url}")
+    @Value("${spring.activemq.broker-url:tcp://localhost:61616}")
     private String brokerUrl;
 
     @Autowired
