@@ -70,8 +70,12 @@ public class ZipkinServerApplication {
 
 ```yml
 spring:
-	zipkin:
+    zipkin:
         base-url: http://localhost:8093/
+    # 必须配置
+    sleuth:
+        sampler:
+            percentage: 1.0
 ```
 
 # 配置Zipkin客户端`cloud-server-user`
@@ -90,7 +94,11 @@ spring:
 
 ```yml
 spring:
-	zipkin:
+    zipkin:
         base-url: http://localhost:8093/
+    # 必须配置
+    sleuth:
+        sampler:
+            percentage: 1.0
 ```
 

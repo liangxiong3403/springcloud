@@ -15,6 +15,12 @@ spring:
             breaker:
                 # 控制@EnableCircuitBreaker的开关方式一
                 enabled: true
+    zipkin:
+        base-url: http://localhost:8093/
+    # 必须配置
+    sleuth:
+        sampler:
+            percentage: 1.0
 # 控制@EnableCircuitBreaker方式二
 hystrix:
     stream:

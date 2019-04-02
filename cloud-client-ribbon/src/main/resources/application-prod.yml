@@ -33,6 +33,12 @@ spring:
     jms:
         template:
             default-destination: activemq-test
+    zipkin:
+        base-url: http://localhost:8093/
+    # 必须配置
+    sleuth:
+        sampler:
+            percentage: 1.0
 # 控制@EnableCircuitBreaker方式二
 hystrix:
     stream:

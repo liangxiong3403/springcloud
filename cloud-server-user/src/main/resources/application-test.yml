@@ -22,8 +22,8 @@ spring:
                     zkNodes: 192.168.0.130,192.168.0.131,192.168.0.132
             rabbit:
                 binder:
-                    adminAddresses: 192.168.0.130,192.168.0.131,192.168.0.132
-                    nodes: 192.168.0.130,192.168.0.131,192.168.0.132
+                    adminAddresses: 192.168.43.2,192.168.43.3,192.168.43.4
+                    nodes: 192.168.43.2,192.168.43.3,192.168.43.4
             # 激活Spring Cloud Stream Binding(激活@StreamListener)
             bindings:
                 # 名称user-message来自于org.liangxiong.ribbon.stream.UserMessageStream.INPUT的值
@@ -45,11 +45,19 @@ spring:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.liangxiong.server.provider.component.ObjectSerializer
     rabbitmq:
-        addresses: 192.168.0.130,192.168.0.131,192.168.0.132
+        addresses: 192.168.43.2,192.168.43.3,192.168.43.4
         username: admin
         password: 123456
     zipkin:
         base-url: http://localhost:8093/
+    # 必须配置
+    sleuth:
+        sampler:
+            percentage: 1.0
+sample:
+    zipkin:
+        # When enabled=false, traces log to the console. Comment to send to zipkin
+        enabled: true
 eureka:
     client:
         service-url:
