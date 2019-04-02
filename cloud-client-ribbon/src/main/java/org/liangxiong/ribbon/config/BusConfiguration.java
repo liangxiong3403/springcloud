@@ -1,6 +1,7 @@
 package org.liangxiong.ribbon.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.liangxiong.ribbon.event.DiyRemoteApplicationEvent;
 import org.springframework.cloud.bus.event.AckRemoteApplicationEvent;
 import org.springframework.cloud.bus.event.EnvironmentChangeRemoteApplicationEvent;
 import org.springframework.cloud.bus.event.RefreshRemoteApplicationEvent;
@@ -15,7 +16,7 @@ import org.springframework.context.event.EventListener;
  * @Time:9:26
  * @Description Spring Cloud Bus 配置类
  */
-@RemoteApplicationEventScan
+@RemoteApplicationEventScan(basePackageClasses = DiyRemoteApplicationEvent.class)
 @Slf4j
 @Configuration
 public class BusConfiguration {
@@ -58,6 +59,16 @@ public class BusConfiguration {
     @EventListener
     public void onAckRemoteApplicationEvent(AckRemoteApplicationEvent event) {
         log.info("AckRemoteApplicationEvent  source: {}, originService: {}, destinationService: {}", event.getSource(), event.getOriginService(), event.getDestinationService());
+    }
+
+    /**
+     * 监听特定事件{@link DiyRemoteApplicationEvent }
+     *
+     * @param event
+     */
+    @EventListener
+    public void onDiyRemoteApplicationEvent(DiyRemoteApplicationEvent event) {
+        log.info("DiyRemoteApplicationEvent  source: {}, originService: {}, destinationService: {}", event.getSource(), event.getOriginService(), event.getDestinationService());
     }
 
 }

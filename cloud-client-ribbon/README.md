@@ -1720,7 +1720,7 @@ spring.cloud.bus.trace.enabled=true
 
 - 查看结果
 
-  - 第一台主机`<http://localhost:9010/trace>`
+  - 第一台主机`http://localhost:9010/trace`
 
     ```json
     [{
@@ -1775,42 +1775,58 @@ spring.cloud.bus.trace.enabled=true
 
 ## 单点方式发送事件
 
-- 请求`curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-user-server:prod:8090`
+- 请求`curl -X POST http://192.168.0.97:9010/bus/refresh?destination=spring-cloud-user-server:test:28089`
 
 - 查看结果
 
-  - 第一台主机`<http://localhost:9010/trace>`
+  - 第一台主机`http://localhost:9010/trace`(展示时间为反序,先发送再确认)
 
     ```json
-    {
-    	timestamp: 1554109724077,
-        info: {
-            signal: "spring.cloud.bus.sent",
-            type: "RefreshRemoteApplicationEvent",
-            id: "89268ed0-7eac-4578-9a36-b49e62f349d8",
-            origin: "spring-cloud-ribbon-client:test:8089",
-            destination: "spring-cloud-user-server:prod:8090"
-        }
-    }
+    [{
+    	"timestamp": 1554167268446,
+    	"info": {
+    		"signal": "spring.cloud.bus.ack",
+    		"event": "RefreshRemoteApplicationEvent",
+    		"id": "1ffbd4fd-fafb-4ad2-8ca7-c772804e6a7c",
+    		"origin": "spring-cloud-ribbon-client:test:28089",
+    		"destination": "spring-cloud-ribbon-client:test:28089"
+    	}
+    }, {
+    	"timestamp": 1554167265530,
+    	"info": {
+    		"signal": "spring.cloud.bus.sent",
+    		"type": "RefreshRemoteApplicationEvent",
+    		"id": "1ffbd4fd-fafb-4ad2-8ca7-c772804e6a7c",
+    		"origin": "spring-cloud-ribbon-client:test:8089",
+    		"destination": "spring-cloud-ribbon-client:test:28089"
+    	}
+    }]
     ```
 
   - 第二台主机与第一台主机内容一样
 
-  - 第三台主机与第一台主机内容一样
-
-  - 消息接收端`spring-cloud-user-server`结果
+  - 第三台主机(先确认,后发送)
 
     ```json
-    {
-        timestamp: "2019-04-01T09:08:44.077+0000",
-        info: {
-            signal: "spring.cloud.bus.sent",
-            type: "RefreshRemoteApplicationEvent",
-            id: "89268ed0-7eac-4578-9a36-b49e62f349d8",
-            origin: "spring-cloud-ribbon-client:test:8089",
-            destination: "spring-cloud-user-server:prod:8090"
-        }
-    }
+    [{
+    	"timestamp": 1554167268446,
+    	"info": {
+    		"signal": "spring.cloud.bus.sent",
+    		"type": "RefreshRemoteApplicationEvent",
+    		"id": "1ffbd4fd-fafb-4ad2-8ca7-c772804e6a7c",
+    		"origin": "spring-cloud-ribbon-client:test:8089",
+    		"destination": "spring-cloud-ribbon-client:test:28089"
+    	}
+    }, {
+    	"timestamp": 1554167268442,
+    	"info": {
+    		"signal": "spring.cloud.bus.ack",
+    		"event": "RefreshRemoteApplicationEvent",
+    		"id": "1ffbd4fd-fafb-4ad2-8ca7-c772804e6a7c",
+    		"origin": "spring-cloud-ribbon-client:test:28089",
+    		"destination": "spring-cloud-ribbon-client:test:28089"
+    	}
+    }]
     ```
 
 - 结论
@@ -1818,6 +1834,107 @@ spring.cloud.bus.trace.enabled=true
   ```tex
   发送:第一台主机
   接收:第一台主机,第二台主机,第三台主机
+  ```
+
+## 自定义事件
+
+- 声明事件
+
+  ```java
+  package org.liangxiong.ribbon.event;
+  
+  public class DiyRemoteApplicationEvent extends RemoteApplicationEvent {
+  
+      private static final long serialVersionUID = 2950774536924746603L;
+  
+      /**
+       * 无参构造器是必须地
+       */
+      protected DiyRemoteApplicationEvent() {
+          super();
+      }
+      
+      public DiyRemoteApplicationEvent(Object source, String originService, String destinationService) {
+          super(source, originService, destinationService);
+      }
+  }
+  ```
+
+- 事件扫描
+
+  ```java
+  @RemoteApplicationEventScan(basePackageClasses = DiyRemoteApplicationEvent.class)
+  @Slf4j
+  @Configuration
+  public class BusConfiguration {}
+  ```
+
+- 事件监听
+
+  ```java
+  @RemoteApplicationEventScan(basePackageClasses = DiyRemoteApplicationEvent.class)
+  @Slf4j
+  @Configuration
+  public class BusConfiguration {
+      /**
+       * 监听特定事件{@link DiyRemoteApplicationEvent }
+       *
+       * @param event
+       */
+      @EventListener
+      public void onDiyRemoteApplicationEvent(DiyRemoteApplicationEvent event) {
+          log.info("DiyRemoteApplicationEvent  source: {}, originService: {}, destinationService: {}", event.getSource(), event.getOriginService(), event.getDestinationService());
+      }
+  }
+  ```
+
+- 发布事件
+
+  ```java
+  package org.liangxiong.ribbon.controller;
+  
+  /**
+   * @author liangxiong
+   * @Date:2019-04-02
+   * @Time:10:32
+   * @Description 自定义事件发布入口
+   */
+  @RestController
+  @RequestMapping("/diy/event")
+  public class UserEventController implements ApplicationContextAware, ApplicationEventPublisherAware {
+  
+      private ApplicationContext context;
+  
+      private ApplicationEventPublisher publisher;
+  
+      @Override
+      public void setApplicationContext(ApplicationContext context) throws BeansException {
+          this.context = context;
+      }
+  
+      @Override
+      public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+          this.publisher = publisher;
+      }
+  
+      /**
+       * 发布自定义事件
+       *
+       * @param user 参数
+       * @return
+       */
+      @PostMapping("/user")
+      public boolean publishUserEvent(@RequestBody User user, @RequestParam(required = false, value = "destinationService") String destinationService) {
+          // 获取应用上下文id
+          String applicationId = context.getId();
+          // 构建事件
+          DiyRemoteApplicationEvent event = new DiyRemoteApplicationEvent(user, applicationId, destinationService);
+          // 发布事件
+          publisher.publishEvent(event);
+          return true;
+      }
+  
+  }
   ```
 
   
