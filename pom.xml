@@ -19,6 +19,7 @@
         <module>cloud-dashboard-hystrix</module>
         <module>cloud-gateway-zuul</module>
         <module>cloud-stream-binder-activemq</module>
+        <module>cloud-sleuth-zipkin</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -157,6 +158,11 @@
             <dependency>
                 <groupId>org.liangxiong</groupId>
                 <artifactId>cloud-stream-binder-activemq</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.liangxiong</groupId>
+                <artifactId>cloud-sleuth-zipkin</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

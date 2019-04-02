@@ -1,0 +1,9 @@
+server:
+    port: 8093
+management:
+    port: 9014
+    security:
+        enabled: false
+spring:
+    application:
+        name: spring-cloud-zipkin-sleuth

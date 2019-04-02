@@ -16,11 +16,19 @@
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <optional>true</optional>
         </dependency>
         <!-- Spring Cloud Stream相关依赖 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-stream</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <!-- Spring Cloud Bus相关依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-bus</artifactId>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 

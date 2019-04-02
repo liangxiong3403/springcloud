@@ -1,7 +1,7 @@
 package org.liangxiong.ribbon.controller;
 
 import org.liangxiong.cloud.api.domain.User;
-import org.liangxiong.ribbon.event.DiyRemoteApplicationEvent;
+import org.liangxiong.cloud.api.event.DiyRemoteApplicationEvent;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;

@@ -1,4 +1,4 @@
-package org.liangxiong.ribbon.config;
+package org.liangxiong.server.provider.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.liangxiong.cloud.api.event.DiyRemoteApplicationEvent;

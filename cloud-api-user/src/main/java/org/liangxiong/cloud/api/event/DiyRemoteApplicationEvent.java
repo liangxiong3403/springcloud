@@ -1,4 +1,4 @@
-package org.liangxiong.ribbon.event;
+package org.liangxiong.cloud.api.event;
 
 import org.springframework.cloud.bus.event.RemoteApplicationEvent;
 
