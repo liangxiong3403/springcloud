@@ -2,7 +2,7 @@ package org.liangxiong.zipkin;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import zipkin.server.internal.EnableZipkinServer;
+import org.springframework.cloud.sleuth.zipkin.stream.EnableZipkinStreamServer;
 
 /**
  * @author liangxiong
@@ -10,7 +10,7 @@ import zipkin.server.internal.EnableZipkinServer;
  * @Time:16:41
  * @Description Zipkin服务器应用
  */
-@EnableZipkinServer
+@EnableZipkinStreamServer
 @SpringBootApplication
 public class ZipkinServerApplication {
 

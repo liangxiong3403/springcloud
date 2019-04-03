@@ -50,14 +50,13 @@ spring:
         password: 123456
     zipkin:
         base-url: http://localhost:8093/
-    # 必须配置
+        # Rabbit采集数据
+        sender:
+            type: rabbit
+    # 必须配置,Otherwise you might think that Sleuth is not working cause it’s omitting some spans.
     sleuth:
         sampler:
             percentage: 1.0
-sample:
-    zipkin:
-        # When enabled=false, traces log to the console. Comment to send to zipkin
-        enabled: true
 eureka:
     client:
         service-url:

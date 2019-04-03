@@ -7,3 +7,13 @@ management:
 spring:
     application:
         name: spring-cloud-zipkin-sleuth
+    cloud:
+        stream:
+            rabbit:
+                binder:
+                    adminAddresses: 192.168.0.130,192.168.0.131,192.168.0.132
+                    nodes: 192.168.0.130,192.168.0.131,192.168.0.132
+    rabbitmq:
+        addresses: 192.168.0.130,192.168.0.131,192.168.0.132
+        username: admin
+        password: 123456
