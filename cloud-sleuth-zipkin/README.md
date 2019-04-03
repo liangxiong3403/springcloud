@@ -224,10 +224,6 @@ spring:
         addresses: 192.168.0.130,192.168.0.131,192.168.0.132
         username: admin
         password: 123456
-    zipkin:
-        # Rabbit采集数据
-        sender:
-            type: rabbit
     # Otherwise you might think that Sleuth is not working cause it’s omitting some spans.
     sleuth:
         sampler:
@@ -282,10 +278,6 @@ spring:
         addresses: 192.168.0.130,192.168.0.131,192.168.0.132
         username: admin
         password: 123456
-    zipkin:
-        # Rabbit采集数据
-        sender:
-            type: rabbit
     # Otherwise you might think that Sleuth is not working cause it’s omitting some spans.
     sleuth:
         sampler:

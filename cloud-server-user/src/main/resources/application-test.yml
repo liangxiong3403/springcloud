@@ -17,9 +17,9 @@ spring:
             kafka:
                 binder:
                     # 默认是本机MQ地址
-                    brokers: 192.168.0.130,192.168.0.131,192.168.0.132
+                    brokers: 192.168.43.2,192.168.43.3,192.168.43.4
                     # 默认是本机zookeeper地址
-                    zkNodes: 192.168.0.130,192.168.0.131,192.168.0.132
+                    zkNodes: 192.168.43.2,192.168.43.3,192.168.43.4
             rabbit:
                 binder:
                     adminAddresses: 192.168.43.2,192.168.43.3,192.168.43.4
@@ -40,7 +40,7 @@ spring:
                         useNativeEncoding: true
     kafka:
         # 集群地址
-        bootstrap-servers: 192.168.0.130:9092,192.168.0.131:9092,192.168.0.132:9092
+        bootstrap-servers: 192.168.43.2:9092,192.168.43.3:9092,192.168.43.4:9092
         producer:
             key-serializer: org.apache.kafka.common.serialization.StringSerializer
             value-serializer: org.liangxiong.server.provider.component.ObjectSerializer
